@@ -1,6 +1,7 @@
 import pytest
 from src.utils.vector import Vector2D
 
+
 def test_addition():
     result = Vector2D(3,4) + Vector2D(1,2)
     assert result.x == 4
