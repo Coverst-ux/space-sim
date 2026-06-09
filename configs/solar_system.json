@@ -1,0 +1,19 @@
+{
+    "bodies": [{
+        "name": "Sun",
+        "mass": 1.989e30,
+        "position": [0,0],
+        "velocity": [0,0],
+        "color": [255, 220, 50],
+        "radius": 6.957e8
+        },
+        {
+        "name": "Earth",
+        "mass": 5.972e24,
+        "position": [149597870700,0],
+        "velocity": [0,29780],
+        "color": [50, 100, 255],
+        "radius": 6.371e6
+        }
+    ]
+}
