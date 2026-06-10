@@ -1,8 +1,7 @@
 import pygame
 from src.io.loader import config_loader
-from src.core.integrator import euler_step
+from src.core.integrator import leapfrog_step
 from src.rendering.renderer import world_to_screen
-
 pygame.init()
 screen = pygame.display.set_mode((800,800))
 clock = pygame.time.Clock()
@@ -20,9 +19,9 @@ while running:
     #screen.fill((0,0,0))
     STEPS_PER_FRAME = 100
 
-# inside the loop, replace euler_step(bodies, 3600) with:
+# inside the loop, replace leapfrog_step(bodies, 3600) with:
     for _ in range(STEPS_PER_FRAME):
-        euler_step(bodies, 3600)
+        leapfrog_step(bodies, 3600)
     
     for body in bodies:
         screen_pos = world_to_screen(body.position, SCALE, OFFSET)
