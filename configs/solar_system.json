@@ -9,6 +9,14 @@
             "radius": 6.957e8
         },
         {
+            "name": "Earth",
+            "mass": 5.972e24,
+            "position": [1.496e11, 0],
+            "velocity": [0, 29780],
+            "color": [50, 100, 255],
+            "radius": 6.371e6
+        },
+        {
             "name": "Mercury",
             "mass": 3.301e23,
             "position": [4.6e10, 0],
@@ -23,14 +31,6 @@
             "velocity": [0, 35260],
             "color": [225, 200, 160],
             "radius": 6.051e6
-        },
-        {
-            "name": "Earth",
-            "mass": 5.972e24,
-            "position": [1.496e11, 0],
-            "velocity": [0, 29780],
-            "color": [50, 100, 255],
-            "radius": 6.371e6
         },
         {
             "name": "Mars",
