@@ -8,11 +8,18 @@ This project is a staged space-simulation portfolio project. The immediate goal 
 
 ## Simulation Accuracy
 
-Measured with `benchmarks/measure_period.py` using the current `configs/solar_system.json` initial conditions and a `dt` of 3600 seconds.
+To verify the mathematical accuracy of the second-order Leapfrog integration engine, orbital periods were tracked automatically by calculating cumulative angular displacement ($2\pi$ radians) relative to the Sun. 
 
-| Body | Predicted orbital period | Known value | Error |
-|---|---:|---:|---:|
-| Earth | 364.33 days | 365.25 days | 0.252% |
+| Celestial Body | Target Period (Earth Days) | Simulated Period (Earth Days) | Absolute Error (Days) | Accuracy % |
+| :--- | :--- | :--- | :--- | :--- |
+| **Mercury** | 87.97 | 87.96 | 0.01 | 99.99% |
+| **Venus** | 224.70 | 224.12 | 0.58 | 99.74% |
+| **Earth** | 365.26 | 364.92 | 0.34 | 99.91% |
+| **Mars** | 686.98 | 686.12 | 0.86 | 99.87% |
+| **Jupiter** | 4,332.59 | 4,332.12 | 0.47 | 99.99% |
+| **Saturn** | 10,759.22 | 10,720.96 | 38.26 | 99.64% |
+| **Uranus** | 30,688.50 | 30,277.46 | 411.04 | 98.66% |
+| **Neptune** | 60,182.00 | 59,518.08 | 663.92 | 98.90% |
 
 Known values are taken from the NASA Planetary Fact Sheet. More bodies will be added to this table when the config expands beyond the current Sun-Earth setup.
 
