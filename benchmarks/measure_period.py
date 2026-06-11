@@ -1,35 +1,50 @@
 import math
 from src.core.integrator import leapfrog_step
 from src.io.loader import config_loader
-def measure_period():
+
+def measure_all_periods():
+    # Load a fresh batch of bodies from your config
     bodies = config_loader()
     sun = bodies[0]
-    earth = bodies[1]
-    dx = earth.position.x - sun.position.x
-    dy = earth.position.y - sun.position.y
-    theta_initial = math.atan2(dy,dx)
-    dt = 3600
-    steps = 8766
-    step = 0
-    threshold = 0.01
-    theta_current = theta_initial
-    theta_prev = theta_initial
-    total_angle = 0.0
-    while abs(total_angle) < (2 * math.pi):
-        leapfrog_step(bodies, dt)
-        step +=1
-        dx = earth.position.x - sun.position.x
-        dy = earth.position.y - sun.position.y
-        theta_current = math.atan2(dy,dx) 
-        delta_theta = theta_current - theta_prev
+    
+    # Loop through every planet starting from index 1 to the end
+    for i in range(1, len(bodies)):
+        planet = bodies[i]
+        
+        # Reload bodies every time so each planet starts fresh from Day 0
+        current_bodies = config_loader()
+        current_sun = current_bodies[0]
+        current_planet = current_bodies[i]
+        
+        dx = current_planet.position.x - current_sun.position.x
+        dy = current_planet.position.y - current_sun.position.y
+        theta_initial = math.atan2(dy, dx)
+        
+        dt = 3600  # 1 hour steps
+        step = 0
+        theta_prev = theta_initial
+        total_angle = 0.0
+        
+        # Run your exact math loop for this specific planet
+        while abs(total_angle) < (2 * math.pi):
+            leapfrog_step(current_bodies, dt)
+            step += 1
+            
+            dx = current_planet.position.x - current_sun.position.x
+            dy = current_planet.position.y - current_sun.position.y
+            theta_current = math.atan2(dy, dx) 
+            
+            delta_theta = theta_current - theta_prev
 
-        if delta_theta < -math.pi:
-            delta_theta += (2* math.pi)
-        elif delta_theta > math.pi:
-            delta_theta -= (2* math.pi)
-        total_angle += delta_theta
-        theta_prev = theta_current
-    days = step * dt / 86400  # convert seconds to days
-    print(f"Earth orbital period: {days:.2f} days")
+            if delta_theta < -math.pi:
+                delta_theta += (2 * math.pi)
+            elif delta_theta > math.pi:
+                delta_theta -= (2 * math.pi)
+                
+            total_angle += delta_theta
+            theta_prev = theta_current
+            
+        days = step * dt / 86400  # convert seconds to days
+        print(f"{current_planet.name} orbital period: {days:.2f} days")
 
-measure_period()
+measure_all_periods()

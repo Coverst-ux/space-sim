@@ -80,10 +80,3 @@ Measure the current Earth orbital period:
 ```bash
 python benchmarks/measure_period.py
 ```
-
-## What I Learned
-
-- Orbital simulations need numerical validation, not just visual inspection.
-- Integrator choice directly affects energy conservation over long runs.
-- Separating physics from rendering makes tests and benchmarks possible.
-- Accuracy tables turn the simulation into something measurable and defensible.

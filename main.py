@@ -31,22 +31,13 @@ while running:
     # 3. Physics Updates
     for _ in range(STEPS_PER_FRAME):
         leapfrog_step(bodies, 3600)
+        for body in bodies:
+            body.record_trail()
     
     # 4. Rendering (With the White Line Trail Engine)
     for body in bodies:
         screen_pos = camera.world_to_screen(body.position.x,body.position.y)
         
-        # Initialize the trail list dynamically if it doesn't exist yet
-        if not hasattr(body, 'trail'):
-            body.trail = []
-            
-        # Append current position to history
-        body.trail.append((body.position.x, body.position.y))
-        
-        # Limit history size to protect memory
-        if len(body.trail) > 100:
-            body.trail.pop(0)
-
         # Draw the continuous white trail line
         if len(body.trail) > 1:
             pixel_trail = [camera.world_to_screen(wx, wy) for wx, wy in body.trail]
