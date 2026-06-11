@@ -1,0 +1,82 @@
+# Space Simulation
+
+A Python 2D orbital simulation focused on measurable physics, not only visuals. The current version models the Sun-Earth system with Newtonian gravity and a leapfrog integrator.
+
+## What This Is
+
+This project is a staged space-simulation portfolio project. The immediate goal is a validated Earth-Sun orbit, then a config-driven multi-planet system, followed by larger N-body simulations and performance benchmarks.
+
+## Simulation Accuracy
+
+Measured with `benchmarks/measure_period.py` using the current `configs/solar_system.json` initial conditions and a `dt` of 3600 seconds.
+
+| Body | Predicted orbital period | Known value | Error |
+|---|---:|---:|---:|
+| Earth | 364.33 days | 365.25 days | 0.252% |
+
+Known values are taken from the NASA Planetary Fact Sheet. More bodies will be added to this table when the config expands beyond the current Sun-Earth setup.
+
+## Features
+
+- Newtonian gravitational force calculation between bodies
+- Euler and leapfrog integration implementations
+- Config-driven body loading from JSON
+- Pygame rendering with orbit trails
+- Pytest coverage for gravity and orbital regression behavior
+- Benchmark script for measuring simulated orbital period
+
+## Physics Engine
+
+The core simulation uses pairwise Newtonian gravity in SI units. Leapfrog integration is the preferred integrator because orbital energy oscillates around a stable value instead of drifting monotonically like Euler integration.
+
+Current simplifications:
+
+- Bodies are treated as point masses for gravity.
+- The Sun starts fixed at the origin but still participates in force calculations.
+- Relativity, rotation, collisions, and non-gravitational forces are not modeled yet.
+- Rendered body sizes are exaggerated so planets remain visible.
+
+## Architecture
+
+```text
+space-sim/
+├── src/
+│   ├── core/       # Body model, gravity, and integrators
+│   ├── io/         # JSON config loading
+│   ├── rendering/  # Pygame coordinate conversion and drawing helpers
+│   └── utils/      # Vector math and physical constants
+├── tests/          # Physics and regression tests
+├── benchmarks/     # Measurement and comparison scripts
+├── configs/        # Simulation initial conditions
+└── DECISIONS.md    # Technical decision log
+```
+
+## Design Decisions
+
+The main documented decision so far is the Phase 2 integrator choice: leapfrog over Euler for stable long-term orbital behavior. See `DECISIONS.md` for the evidence and reasoning.
+
+## Running It
+
+```bash
+pip install -r requirements.txt
+python main.py
+```
+
+Run tests:
+
+```bash
+pytest tests/ -v
+```
+
+Measure the current Earth orbital period:
+
+```bash
+python benchmarks/measure_period.py
+```
+
+## What I Learned
+
+- Orbital simulations need numerical validation, not just visual inspection.
+- Integrator choice directly affects energy conservation over long runs.
+- Separating physics from rendering makes tests and benchmarks possible.
+- Accuracy tables turn the simulation into something measurable and defensible.
