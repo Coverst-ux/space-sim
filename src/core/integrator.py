@@ -18,9 +18,7 @@ def euler_step(bodies: list[Body], dt: float) -> None:
         old_velocity = body.velocity
         body.position = body.position + old_velocity * dt  
         body.velocity = body.velocity + acceleration * dt
-        
-# In your Body class, make sure you have an attribute: self.acceleration = Vector2D(0, 0)
-
+                               
 def update_forces(bodies: list[Body]) -> None:
     """Helper to calculate and assign accelerations to all bodies once."""
     forces = {body.name: Vector2D(0, 0) for body in bodies}
@@ -40,7 +38,6 @@ def leapfrog_step(bodies: list[Body], dt: float, is_first_step: bool = False) ->
     Kick-Drift-Kick Leapfrog. 
     Requires tracking body.acceleration across steps to avoid double force calculation.
     """
-    # If it's the very first step of the simulation, we need initial accelerations
     if is_first_step:
         update_forces(bodies)
         
