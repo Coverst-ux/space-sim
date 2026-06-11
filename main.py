@@ -40,7 +40,7 @@ while running:
         body.trail.append(screen_pos)
         
         # Limit history size to protect memory
-        if len(body.trail) > 85:
+        if len(body.trail) > 50:
             body.trail.pop(0)
 
         # Draw the continuous white trail line
@@ -49,7 +49,7 @@ while running:
 
         # Draw the physical body on top of its trail
         # Making the Sun stand out visually from the planets
-        radius = 15 if body.name.lower() == "sun" else 6
+        radius = 50 if body.name.lower() == "sun" else 6
         pygame.draw.circle(screen, body.color, screen_pos, radius)
 
     # 5. Flip Display
