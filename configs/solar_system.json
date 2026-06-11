@@ -1,19 +1,76 @@
 {
-    "bodies": [{
-        "name": "Sun",
-        "mass": 1.989e30,
-        "position": [0,0],
-        "velocity": [0,0],
-        "color": [255, 220, 50],
-        "radius": 6.957e8
+    "bodies": [
+        {
+            "name": "Sun",
+            "mass": 1.989e30,
+            "position": [0, 0],
+            "velocity": [0, 0],
+            "color": [255, 220, 50],
+            "radius": 6.957e8
         },
         {
-        "name": "Earth",
-        "mass": 5.972e24,
-        "position": [149597870700,0],
-        "velocity": [0,29780],
-        "color": [50, 100, 255],
-        "radius": 6.371e6
+            "name": "Mercury",
+            "mass": 3.301e23,
+            "position": [4.6e10, 0],
+            "velocity": [0, 58980],
+            "color": [165, 165, 165],
+            "radius": 2.439e6
+        },
+        {
+            "name": "Venus",
+            "mass": 4.867e24,
+            "position": [1.074e11, 0],
+            "velocity": [0, 35260],
+            "color": [225, 200, 160],
+            "radius": 6.051e6
+        },
+        {
+            "name": "Earth",
+            "mass": 5.972e24,
+            "position": [1.496e11, 0],
+            "velocity": [0, 29780],
+            "color": [50, 100, 255],
+            "radius": 6.371e6
+        },
+        {
+            "name": "Mars",
+            "mass": 6.39e23,
+            "position": [2.066e11, 0],
+            "velocity": [0, 26500],
+            "color": [225, 100, 50],
+            "radius": 3.389e6
+        },
+        {
+            "name": "Jupiter",
+            "mass": 1.898e27,
+            "position": [7.405e11, 0],
+            "velocity": [0, 13720],
+            "color": [210, 180, 140],
+            "radius": 6.991e7
+        },
+        {
+            "name": "Saturn",
+            "mass": 5.683e26,
+            "position": [1.352e12, 0],
+            "velocity": [0, 10180],
+            "color": [240, 220, 170],
+            "radius": 5.823e7
+        },
+        {
+            "name": "Uranus",
+            "mass": 8.681e25,
+            "position": [2.741e12, 0],
+            "velocity": [0, 7110],
+            "color": [180, 230, 250],
+            "radius": 2.536e7
+        },
+        {
+            "name": "Neptune",
+            "mass": 1.024e26,
+            "position": [4.444e12, 0],
+            "velocity": [0, 5500],
+            "color": [60, 120, 240],
+            "radius": 2.462e7
         }
     ]
 }
