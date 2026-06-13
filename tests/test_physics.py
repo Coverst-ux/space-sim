@@ -73,3 +73,35 @@ def test_generate_random_bodies_output():
         # 4. Verify velocities are non-zero and matching orbital expectations
         vel_magnitude = math.sqrt(body.velocity.x**2 + body.velocity.y**2)
         assert vel_magnitude > 0
+
+
+def test_collision_merging_conserves_momentum() -> None:
+    body1 = Body(
+        name="planet_1",
+        mass=1000.0,
+        position = Vector2D(0.0,0.0),
+        velocity=Vector2D(100.0,0.0)
+    )
+
+    body2 = Body(
+        name="planet_2",
+        mass=2000.0,
+        position=Vector2D(10.0, 0.0),
+        velocity=Vector2D(-50.0, 0.0)
+    )
+
+    bodies = [body1, body2]
+
+    initial_momentum_x = (body1.mass * body1.velocity.x) + (body2.mass * body2.velocity.x)
+    initial_momentum_y = (body1.mass * body1.velocity.y) + (body2.mass * body2.velocity.y)
+
+    remaining_bodies = check_and_merge(bodies, merge_radius=15.0)
+    assert len(remaining_bodies) == 1
+
+    final_body = remaining_bodies[0]
+
+    final_momentum_x = final_body.mass * final_body.velocity.x
+    final_momentum_y = final_body.mass * final_body.velocity.y
+
+    assert final_momentum_x == pytest.approx(initial_momentum_x)
+    assert final_momentum_y == pytest.approx(initial_momentum_y)
