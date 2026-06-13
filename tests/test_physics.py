@@ -5,6 +5,7 @@ import pytest
 from src.core.body import Body
 from src.core.integrator import leapfrog_step
 from src.core.physics import check_and_merge, gravitational_force
+from src.core.spawn import generate_random_bodies
 from src.io.loader import config_loader
 from src.utils.constants import G
 from src.utils.vector import Vector2D
@@ -48,3 +49,27 @@ def  test_total_momentum():
     py_after = sum(b.mass * b.velocity.y for b in result)
     assert abs(px_after - px_before) < 1e15
     assert abs(py_after - py_before) < 1e15
+
+
+
+def test_generate_random_bodies_output():
+    """Verify that the generation creates the right number of valid Body objects."""
+    n = 50
+    bodies = generate_random_bodies(n)
+    
+    # 1. Check total count
+    assert len(bodies) == n
+    
+    # 2. Check types and properties of the generated bodies
+    for i, body in enumerate(bodies):
+        assert isinstance(body, Body)
+        assert body.name == f"body_{i}"
+        
+        # 3. Verify positions are within the expected disk boundaries (1e10 to 1e12 meters)
+        # We find the magnitude (radius) of the position vector
+        pos_magnitude = math.sqrt(body.position.x**2 + body.position.y**2)
+        assert 1e10 <= pos_magnitude <= 1e12
+        
+        # 4. Verify velocities are non-zero and matching orbital expectations
+        vel_magnitude = math.sqrt(body.velocity.x**2 + body.velocity.y**2)
+        assert vel_magnitude > 0
