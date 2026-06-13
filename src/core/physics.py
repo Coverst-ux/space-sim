@@ -1,8 +1,8 @@
 # src/core/physics.py
-from src.core.body import Body
 from src.utils.constants import EPSILON
 from src.utils.constants import G
 from src.utils.vector import Vector2D
+from src.core.body import Body
 
 
 def gravitational_force(m1: float, m2: float, pos1: Vector2D, pos2: Vector2D) -> Vector2D:
@@ -32,7 +32,7 @@ def check_and_merge(bodies: list[Body], merge_radius: float) -> list[Body]:
             distance = (b2.position - b1.position).magnitude() 
             if distance < merge_radius:
                 new_mass = b2.mass + b1.mass
-                new_velocity = (b2.mass * b2.velocity + b1.mass * b1.velocity) * (1.0 /new_mass)
+                new_velocity = (b2.velocity * b2.mass + b1.velocity * b1.mass) * (1.0 /new_mass)
                 b1.mass = new_mass
                 b1.velocity = new_velocity
                 merged.add(j)
