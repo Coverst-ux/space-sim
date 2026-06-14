@@ -4,22 +4,22 @@ import pytest
 
 from src.core.body import Body
 from src.core.integrator import leapfrog_step
-from src.core.physics import check_and_merge, gravitational_force
+from src.core.physics import check_and_merge, gravitational_force_softened
 from src.core.spawn import generate_random_bodies
 from src.io.loader import config_loader
 from src.utils.constants import G
 from src.utils.vector import Vector2D
 
 
-def test_gravitational_force():
+def test_gravitational_force_softened():
     pos1 = Vector2D(0,0)
     pos2 = Vector2D(1,0)
-    f = gravitational_force(1.0, 1.0, pos1, pos2)
-    assert abs(f.magnitude()- G ) < 1e-20
+    f = gravitational_force_softened(1.0, 1.0, pos1, pos2)
+    assert abs(f.magnitude()- 6.6743e-29 ) < 1e-32
     
 def test_gravity_zero_distance_raises():
     with pytest.raises(ValueError):
-        gravitational_force(1.0, 1.0, Vector2D(0,0), Vector2D(0,0))
+        gravitational_force_softened(1.0, 1.0, Vector2D(0,0), Vector2D(0,0))
         
 def test_earth_orbital_period():
     bodies = config_loader()
