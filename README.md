@@ -31,6 +31,10 @@ Known values are taken from the NASA Planetary Fact Sheet. More bodies will be a
 - Pygame rendering with orbit trails
 - Pytest coverage for gravity and orbital regression behavior
 - Benchmark script for measuring simulated orbital period
+- Gravitational softening to prevent force singularities during close encounters
+- Body collision detection with momentum-conserving merges
+- Random N-body generation with coherent angular velocity distribution
+- Camera and zoom system for navigating large simulations
 
 ## Physics Engine
 
@@ -60,7 +64,7 @@ space-sim/
 
 ## Design Decisions
 
-The main documented decision so far is the Phase 2 integrator choice: leapfrog over Euler for stable long-term orbital behavior. See `DECISIONS.md` for the evidence and reasoning.
+The main documented decisions cover the Phase 2 integrator choice (leapfrog over Euler for stable long-term orbital behavior), the Phase 3 trail system (deque over list for O(1) insertion), and the Phase 4 profiling analysis that identified `gravitational_force` as the O(N²) bottleneck. Phase 5 will address this with NumPy vectorization and a Barnes-Hut quadtree. See `DECISIONS.md` for evidence and reasoning.
 
 ## Running It
 
