@@ -41,7 +41,35 @@ A **`collections.deque(maxlen=500)`** was implemented to manage the historical c
 Using a normal list forces Python to drag every single old coordinate forward in memory every time the trail exceeds the specified length. When calling `list.pop(0)`, the item at index `0` is removed, meaning that Python must shift every remaining coordinate down a slot to keep the array continuous in memory. This introduces an $O(N)$ linear time penalty on every frame update, creating unnecessary strain on the CPU as the simulation continues.
 
 #### The Deque Advantage
-A `deque` with a fixed `maxlen` eliminates this performance bottleneck entirely. It pushes memory management entirely down to the C-level, automatically dropping the oldest position point off the front of the queue the second a new point is appended to the back. Because a deque is a doubly-linked structure, these insertions and deletions happen in $O(1)$ constant time without disturbing or shifting the rest of the elements in memory.
+A `deque` with a fixed `maxlen` removes this performance bottleneck entirely. It pushes memory management entirely down to the C-level, automatically dropping the oldest position point off the front of the queue the second a new point is appended to the back. Because a deque is a doubly-linked structure, these insertions and deletions happen in $O(1)$ constant time without disturbing or shifting the rest of the elements in memory.
 
 #### The Zoom Integration
 Since the trail history is strictly capped at a maximum of 500 points per body, the computational efficiency per frame remains optimal. Instead of managing a complex pixel cache that would require a full recalculation every time the camera zoom changes, the engine safely converts raw coordinates (meters) to screen coordinates (pixels) on the fly. For a standard setup of 9 celestial bodies, this requires fewer than 4,500 basic calculations per frame—a negligible processing load that ensures the simulation display maintains a smooth, stable 60 FPS.
+
+# Architectural Decisions Log
+
+## Phase 4: N-body Complexity & Profiling
+
+### The Question
+What is the bottleneck in the simulation and what can be done about it?
+
+### Options Considered
+- Keep O(N^2) but vectorize with NumPy (Complexity stays the same but constants are faster)
+- Implement Barnes-Hut quadtree(Reduces the complexity to  O(Nlog(N))
+- Do Both
+
+### Chosen Option
+Do both. Implementing a Barnes-Hut quadtree reduces the actual complexity to O(Nlog(N)) while NumPy improves the speed of the constant. The obvious choice here is to combine both worlds to produce the most optimal efficiency. 
+
+### Why?
+Using Barnes-Hut quadtree improves the complexity of the algorithms to be significantly more efficient. With the brute-force option of O(N^2), when N = 100, ncalls were at 247,500 calls. N= 200, ncalls = 995,000, and finally at N = 500, ncalls were at an alarming 6,237,500 which took 33.07s to complete. Barnes-Hut would greatly reduce the computational load exerted. Gravitational_force is the real bottleneck which has all the calculations, force computation, and the operations. NumPy calculates the forces across all pairs in C, removing each pair's Python object creation and overhead that quickly piles up at high n.
+
+### Empirical Evidence
+| N | Time (s) | `gravitational_force` calls |
+|---|---|---|
+| 100 | 1.228 | 247,500 |
+| 200 | 4.916 | 995,000 |
+| 500 | 33.074 | 6,237,500 |
+
+### Next steps
+The next phase, phase 5, will address this bottleneck by deploying NumPy and Barnes-Hut algorithim to substantially streamline the operations.
