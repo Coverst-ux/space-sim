@@ -11,8 +11,8 @@ class QuadNode:
         self.ne = None
         self.sw = None
         self.se = None
-
     def insert(self, body):
+        
         if self.body is None and self.nw is None:
             self.body = body
             return
@@ -22,10 +22,16 @@ class QuadNode:
             old_body = self.body
             self.body = None
             self.subdivide()
-            self.get_quadrant(old_body).insert(old_body)
-            self.get_quadrant(body).insert(body)
+            quadrant = self.get_quadrant(body)
+            quadrant_old = self.get_quadrant(old_body)
+            if quadrant_old is not None:
+                quadrant_old.insert(old_body)
+            if quadrant is not None:
+                quadrant.insert(body)
         if self.body is None and self.nw is not None:
-            self.get_quadrant(body).insert(body)
+            quadrant = self.get_quadrant(body)
+            if quadrant is not None:
+                quadrant.insert(body)
 
     def subdivide(self):
         self.ne = QuadNode(
