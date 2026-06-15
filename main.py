@@ -12,7 +12,7 @@ bodies = config_loader()
 camera = Camera(SCREEN_W, SCREEN_H)
 camera.zoom = 800 / (4 * 1.496e11)
 running = True
-STEPS_PER_FRAME = 100
+STEPS_PER_FRAME = 50
 
 while running:
     # 1. Handle Events

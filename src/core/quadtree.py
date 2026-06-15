@@ -93,7 +93,7 @@ class QuadNode:
         if self.body is not None and self.nw is None:
             if self.body is body:
                 return Vector2D(0, 0)
-            return gravitational_force_softened(body.mass, self.body.mass, self.body.position, body.position)
+            return gravitational_force_softened(body.mass, self.body.mass, body.position, self.body.position)
 
         d = math.sqrt((body.position.x - self.center_of_mass_x) ** 2 + (body.position.y - self.center_of_mass_y) ** 2)
         if d == 0:

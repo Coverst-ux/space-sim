@@ -1,3 +1,4 @@
+from src.core.quadtree import QuadNode
 from src.utils.vector import Vector2D
 from src.core.body import Body
 from src.core.physics import gravitational_force_softened
@@ -29,9 +30,18 @@ def update_forces(bodies: list[Body]) -> None:
             f = gravitational_force_softened(body1.mass, body2.mass, body1.position, body2.position)
             forces[body1.name] = forces[body1.name] + f
             forces[body2.name] = forces[body2.name] + (f * -1)
-            
+
+def update_forces_bh(bodies: list[Body], theta: float = 0.1) -> None:
+    size = 1.0e13
+    root = QuadNode(0,0,size)
     for body in bodies:
-        body.acceleration = forces[body.name] * (1.0 / body.mass)
+        root.insert(body)
+
+    root.update_mass()
+
+    for body in bodies:
+        f = root.calculate_force(body, theta)
+        body.acceleration = f * (1 / body.mass)
 
 def leapfrog_step(bodies: list[Body], dt: float, is_first_step: bool = False) -> None:
     """
@@ -39,7 +49,7 @@ def leapfrog_step(bodies: list[Body], dt: float, is_first_step: bool = False) ->
     Requires tracking body.acceleration across steps to avoid double force calculation.
     """
     if is_first_step:
-        update_forces(bodies)
+        update_forces_bh(bodies)
         
     # 1. Kick: Update velocities by half a step using CURRENT accelerations
     for body in bodies:
@@ -50,7 +60,7 @@ def leapfrog_step(bodies: list[Body], dt: float, is_first_step: bool = False) ->
         body.position = body.position + body.velocity * dt
         
     # 3. Update accelerations at the NEW positions
-    update_forces(bodies)
+    update_forces_bh(bodies)
     
     # 4. Kick: Update velocities by the remaining half step using NEW accelerations
     for body in bodies:
