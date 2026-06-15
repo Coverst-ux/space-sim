@@ -1,3 +1,9 @@
+import math
+
+from core.physics import gravitational_force_softened
+from utils.vector import Vector2D
+
+
 class QuadNode:
     def __init__(self, cx, cy, size):
         self.cx = cx
@@ -83,3 +89,23 @@ class QuadNode:
             self.center_of_mass_y = self.center_of_mass_y / self.total_mass
 
         return
+    def calculate_force(self, body, theta):
+        if self.body is not None and self.nw is None:
+            if self.body is body:
+                return Vector2D(0, 0)
+            return gravitational_force_softened(body.mass, self.body.mass, self.body.position, body.position)
+
+        d = math.sqrt((body.position.x - self.center_of_mass_x) ** 2 + (body.position.y - self.center_of_mass_y) ** 2)
+        if d == 0:
+            return Vector2D(0, 0)
+        if self.size / d < theta:
+            return gravitational_force_softened(body.mass, self.total_mass, body.position, Vector2D(self.center_of_mass_x, self.center_of_mass_y))
+
+        children = [self.nw, self.ne, self.sw, self.se]
+        init_force = Vector2D(0, 0)
+        for child in children:
+            if child is not None:
+                init_force +=  child.calculate_force(body, theta)
+        return init_force
+
+
