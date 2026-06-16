@@ -1,7 +1,10 @@
+import numpy as np
 from src.core.quadtree import QuadNode
 from src.utils.vector import Vector2D
 from src.core.body import Body
 from src.core.physics import gravitational_force_softened
+from utils.constants import EPSILON, G
+
 
 def euler_step(bodies: list[Body], dt: float) -> None:
     forces = {body.name: Vector2D(0,0) for body in bodies}
@@ -43,13 +46,28 @@ def update_forces_bh(bodies: list[Body], theta: float = 0.1) -> None:
         f = root.calculate_force(body, theta)
         body.acceleration = f * (1 / body.mass)
 
+def update_forces_np(bodies: list[Body]):
+    positions = np.array([[b.position.x, b.position.y] for b in bodies])
+    masses = np.array([b.mass for b in bodies])
+
+    diff_pos = positions[np.newaxis, :] - positions[:, np.newaxis]
+
+    dist_sq = (diff_pos ** 2).sum(axis=2) + EPSILON ** 2
+    dist = np.sqrt(dist_sq)
+    force_mag = G * masses[:, np.newaxis] * masses[np.newaxis, :] / dist_sq
+    force_vec = (force_mag / dist)[..., np.newaxis] * diff_pos
+    total_force = force_vec.sum(axis=1)
+    for i, body in enumerate(bodies):
+        body.acceleration = Vector2D(float(total_force[i][0]), float(total_force[i][1])) * (1 / body.mass)
+
+
 def leapfrog_step(bodies: list[Body], dt: float, is_first_step: bool = False) -> None:
     """
     Kick-Drift-Kick Leapfrog. 
     Requires tracking body.acceleration across steps to avoid double force calculation.
     """
     if is_first_step:
-        update_forces_bh(bodies)
+        update_forces_np(bodies)
         
     # 1. Kick: Update velocities by half a step using CURRENT accelerations
     for body in bodies:
@@ -60,7 +78,7 @@ def leapfrog_step(bodies: list[Body], dt: float, is_first_step: bool = False) ->
         body.position = body.position + body.velocity * dt
         
     # 3. Update accelerations at the NEW positions
-    update_forces_bh(bodies)
+    update_forces_np(bodies)
     
     # 4. Kick: Update velocities by the remaining half step using NEW accelerations
     for body in bodies:
