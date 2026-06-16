@@ -7,14 +7,21 @@ from src.utils.vector import Vector2D
 
 def generate_random_bodies(n:int)-> list[Body]:
     bodies = []
-    total_mass = n * SOLAR_MASS
+    core_mass = SOLAR_MASS * n * 100
+    core = Body(
+        name="core",
+        mass=core_mass,  # dominant central mass
+        position=Vector2D(0, 0),
+        velocity=Vector2D(0, 0)
+    )
+    bodies.append(core)
 
     for i in range(n):
         angle = random.uniform(0, 2 * math.pi) 
-        r = random.uniform(1e10, 1e12)
+        r = random.uniform(1e11, 1e12)
         x = r * math.cos(angle)
         y = r * math.sin(angle)
-        v_circ = math.sqrt(G * total_mass / r)
+        v_circ = math.sqrt(G * core_mass / r)
         vx = -v_circ * math.sin(angle)  # perpendicular to position
         vy =  v_circ * math.cos(angle)
         new_body = Body(
