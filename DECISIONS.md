@@ -48,6 +48,8 @@ Since the trail history is strictly capped at a maximum of 500 points per body, 
 
 # Architectural Decisions Log
 
+---
+
 # Phase 4: N-body Complexity & Profiling
 
 ## The Question
@@ -73,6 +75,8 @@ Using Barnes-Hut quadtree improves the complexity of the algorithms to be signif
 
 ## Next steps
 The next phase, phase 5, will address this bottleneck by deploying NumPy and Barnes-Hut algorithm to substantially streamline the operations.
+
+---
 
 # Phase 5: Barnes-Hut Algorithm and Bottleneck solution
 
@@ -113,3 +117,24 @@ NumPy replaces the Python loops which was the main culprit with bulk C operation
 | 500 | 33.074 | 0.835 | 39x faster |
 
 At N=500, NumPy completed the steps in 0.835s opposed to the 33.07s for $O(N^2)$, a 39x speedup. This speedup grows as N grows, confirming that NumPy's advantage scales with the number of pairs being computed.
+
+# Phase 5: Theta Parameter Selection for Barnes-Hut Approximation
+
+## The Question
+Which theta value balances accuracy and performance?
+
+## Options Considered
+- 0.1
+- 0.3
+- 0.5
+- 0.7
+- 1.0
+
+## What was Chosen
+0.5
+
+## Why
+The easiest way to find out what value is the equilibrium between accuracy and performance is to run benchmarks and have the data speak for itself. Therefore, a test was written with evenly spaced values between 0 and 1 to represent the full range of the parameter. As shown in benchmarks/theta_accuracy.png, a theta of 0.1 produced a mean error percentage of 0.035%, the downside is that the traversal costs would then skyrocket. Same goes for theta=0.3, mean error percentage is 0.21% while theta=0.5 has a barely higher error percentage while also improving the performance. 
+
+## Empirical Evidence & Analysis
+![Theta Accuracy](benchmarks/theta_accuracy.png)
