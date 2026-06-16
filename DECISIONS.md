@@ -82,7 +82,7 @@ How can Barnes-Hut algorithm be applied to resolve the bottleneck that the curre
 ## Solution
 Barnes-Hut algorithm uses a quadtree to traverse through all bodies. It traverses through all the nodes (bodies) until it finds a node that is far away enough from the target body for it to be considered as a single body. This increases accuracy as long as the theta is correctly set.
 
-## Empirical Evidence
+## Empirical Evidence & Analysis
 | N | O(N²) Time (s) | Barnes-Hut Time (s) | Ratio |
 |---|---|---|---|
 | 100 | 1.228 | 6.867 | 5.6x slower |
@@ -93,3 +93,23 @@ Counterintuitively, the initial benchmark data indicates the Barnes-Hut implemen
 
 ## Next steps
 The next steps integrate NumPy vectorization with Barnes-Hut to further mitigate computational bottlenecks.
+
+# Phase 5: NumPy Vectorization
+
+## The Question
+How can NumPy be deployed to decrease the latency of the constants?
+
+## The Problem
+Vector2D's overhead that was created every pair remained as a bottleneck even after integrating Barnes-Hut.
+
+## Solution 
+NumPy replaces the Python loops which was the main culprit with bulk C operations on arrays. The C operations on these arrays were processed in one C call, therefore bypassing the interpreter from the inner loop.
+
+## Empirical Evidence & Analysis
+| N | O(N²) Time (s) | NumPy Time (s) | Speedup |
+|---|---|---|---|
+| 100 | 1.228 | 0.052 | 23x faster |
+| 200 | 4.916 | 0.163 | 30x faster |
+| 500 | 33.074 | 0.835 | 39x faster |
+
+At N=500, NumPy completed the steps in 0.835s opposed to the 33.07s for $O(N^2)$, a 39x speedup. This speedup grows as N grows, confirming that NumPy's advantage scales with the number of pairs being computed.
