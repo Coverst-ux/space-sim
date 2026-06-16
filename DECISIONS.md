@@ -62,7 +62,7 @@ What is the bottleneck in the simulation and what can be done about it?
 Do both. Implementing a Barnes-Hut quadtree reduces the actual complexity to $O(N \log N)$ while NumPy improves the speed of the constant. The obvious choice here is to combine both worlds to produce the most optimal efficiency. 
 
 ## Why?
-Using Barnes-Hut quadtree improves the complexity of the algorithms to be significantly more efficient. With the brute-force option of `$O(N^2)$` when N = 100, ncalls were at 247,500 calls. N= 200, ncalls = 995,000, and finally at N = 500, ncalls were at an alarming 6,237,500 which took 33.07s to complete. Barnes-Hut would greatly reduce the computational load exerted. Gravitational_force is the real bottleneck which has all the calculations, force computation, and the operations. NumPy calculates the forces across all pairs in C, removing each pair's Python object creation and overhead that quickly piles up at high n.
+Using Barnes-Hut quadtree improves the complexity of the algorithms to be significantly more efficient. With the brute-force option of $O(N^2)$ when N = 100, ncalls were at 247,500 calls. N= 200, ncalls = 995,000, and finally at N = 500, ncalls were at an alarming 6,237,500 which took 33.07s to complete. Barnes-Hut would greatly reduce the computational load exerted. Gravitational_force is the real bottleneck which has all the calculations, force computation, and the operations. NumPy calculates the forces across all pairs in C, removing each pair's Python object creation and overhead that quickly piles up at high n.
 
 ## Empirical Evidence
 | N | Time (s) | `gravitational_force` calls |
