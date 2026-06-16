@@ -3,15 +3,24 @@
 ![Galaxy Simulation](simulation.gif)
 
 
-A Python 2D orbital simulation focused on measurable physics, not only visuals. The current version models the Sun-Earth system with Newtonian gravity and a leapfrog integrator.
+A 2D gravitational N-body simulation engine implementing Leapfrog (Störmer-Verlet) integration and the Barnes-Hut spatial partitioning algorithm ($O(N \log N)$), achieving a 39× speedup over brute force at N=500 via NumPy vectorization. Orbital accuracy validated against NASA Planetary Fact Sheet data across all 8 planets, with a maximum period error of 1.1% on Neptune's 60,182-day orbit.
 
-## What This Is
+## Performance
 
-This project is a staged space-simulation portfolio project. The immediate goal is a validated Earth-Sun orbit, then a config-driven multi-planet system, followed by larger N-body simulations and performance benchmarks.
+> **Note:** Barnes-Hut underperforms at N=500 due to pure Python tree construction and recursive traversal overhead, this is expected behavior at low N. See [Design Decisions](#design-decisions) for full analysis.
+
+| Method | Time (N=500, 50 steps) | Relative Speed |
+|---|---|---|
+| O(N²) pure Python | 33.07s | baseline |
+| NumPy vectorized | 0.835s | 39.6x faster |
+| Barnes-Hut pure Python | 100.1s | 3x slower |
+
+At N=500, NumPy vectorization dominates by replacing Python-level loop dispatch and per-pair object allocation with contiguous memory operations executed by compiled C routines. Although Barnes-Hut reduces force evaluation complexity from $O(N^2)$ to $O(N \log N)$, its advantage is outweighed at this scale by quadtree construction and recursive traversal costs in pure Python. The implementation demonstrates the algorithmic architecture and expected scaling behavior, but interpreter overhead prevents reaching the particle counts where asymptotic gains dominate. This motivates the planned NumPy + Barnes-Hut hybrid implementation described in the Design Decisions section.
+**Benchmark environment:** Python 3.14 · Intel i5-14400F · Windows 11 Pro
 
 ## Simulation Accuracy
 
-To verify the mathematical accuracy of the second-order Leapfrog integration engine, orbital periods were tracked automatically by calculating cumulative angular displacement ($2\pi$ radians) relative to the Sun. 
+Orbital periods were validated by tracking cumulative angular displacement ($2\pi$ radians) relative to the Sun using the second-order Leapfrog (Störmer-Verlet) integrator. Accuracy degrades for outer planets predictably, the same timestep $\Delta t$ that gives Mercury a 0.01-day error gives Neptune a 663-day error because Neptune's orbital period is 688× longer, accumulating more integration steps per orbit.
 
 | Celestial Body | Target Period (Earth Days) | Simulated Period (Earth Days) | Absolute Error (Days) | Accuracy % |
 | :--- | :--- | :--- | :--- | :--- |
@@ -24,57 +33,179 @@ To verify the mathematical accuracy of the second-order Leapfrog integration eng
 | **Uranus** | 30,688.50 | 30,277.46 | 411.04 | 98.66% |
 | **Neptune** | 60,182.00 | 59,518.08 | 663.92 | 98.90% |
 
-Known values are taken from the NASA Planetary Fact Sheet. More bodies will be added to this table when the config expands beyond the current Sun-Earth setup.
+Known values sourced from the [NASA Planetary Fact Sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/).
+
+## Numerical Stability
+
+Leapfrog was selected over Euler because it is a symplectic integrator.
+Over a 20-year simulation horizon, Euler accumulates approximately
+60% relative energy error while Leapfrog remains bounded below 0.03%.
+
+![Energy Error Comparison](benchmarks/euler_vs_leapfrog_energy.png)
+
+For the full analysis and benchmark methodology, see DECISIONS.md.
 
 ## Features
 
 - Newtonian gravitational force calculation between bodies
-- Euler and leapfrog integration implementations
+- Euler and Leapfrog (Störmer-Verlet) integration implementations
 - Config-driven body loading from JSON
-- Pygame rendering with orbit trails
-- Pytest coverage for gravity and orbital regression behavior
-- Benchmark script for measuring simulated orbital period
-- Gravitational softening to prevent force singularities during close encounters
+- Pygame rendering with motion-blur orbit trails
+- Decoupled physics and rendering threads via `threading.Lock` to isolate the Pygame render-viewport frame-rate from the physics integration pass
+- Gravitational softening ($\epsilon$) to prevent force singularities during close encounters
 - Body collision detection with momentum-conserving merges
-- Random N-body generation with coherent angular velocity distribution
+- Random N-body generation with coherent prograde velocity distribution ($v = \sqrt{GM/r}$)
 - Camera and zoom system for navigating large simulations
+- Barnes-Hut $O(N \log N)$ spatial partitioning for gravitational force approximation
+- NumPy vectorized force calculations eliminating per-pair Python object overhead
+- Pytest coverage for gravitational force, orbital regression, and momentum conservation
+- Benchmark scripts for orbital period measurement and integrator comparison
 
 ## Physics Engine
 
-The core simulation uses pairwise Newtonian gravity in SI units. Leapfrog integration is the preferred integrator because orbital energy oscillates around a stable value instead of drifting monotonically like Euler integration.
+### Solar System Simulation
 
-Current simplifications:
+The Solar System simulation computes pairwise Newtonian gravity in SI units:
 
-- Bodies are treated as point masses for gravity.
-- The Sun starts fixed at the origin but still participates in force calculations.
-- Relativity, rotation, collisions, and non-gravitational forces are not modeled yet.
-- Rendered body sizes are exaggerated so planets remain visible.
+$$F = \frac{G m_1 m_2}{r^2}$$
+
+Leapfrog (Störmer-Verlet) integration is used over Euler because it is a symplectic integrator, it preserves the geometric structure of Hamiltonian systems, causing orbital energy to oscillate around a stable value rather than drift monotonically. The update equations are:
+
+$$v_{i+1/2} = v_i + \frac{1}{2} a_i \Delta t$$
+$$x_{i+1} = x_i + v_{i+1/2} \Delta t$$
+$$v_{i+1} = v_{i+1/2} + \frac{1}{2} a_{i+1} \Delta t$$
+
+All bodies including the Sun are integrated each step. The Sun's displacement is negligible due to its mass dominance ($M_\odot = 1.989 \times 10^{30}$ kg) but is retained for physical correctness.
+
+### N-body / Galaxy Simulation
+
+The galaxy simulation uses a Barnes-Hut quadtree to reduce gravitational force computation from $O(N^2)$ to $O(N \log N)$. The tree recursively partitions space into quadrants. For each body, the tree is traversed and a node is treated as a single aggregate mass if it satisfies the Multipole Acceptance Criterion (MAC):
+
+$$\frac{s}{d} < \theta$$
+
+where $s$ is the node's width, $d$ is the distance from the body to the node's center of mass, and $\theta$ is the accuracy parameter (set to 0.5). The aggregate center of mass is computed as:
+
+$$\vec{r}_{cm} = \frac{\sum m_i \vec{r}_i}{\sum m_i}$$
+
+The closer a body is to a node, the more precisely the force is calculated, distant nodes are approximated as a single mass. NumPy vectorization replaces Python-level loops with contiguous memory operations executed via compiled C routines, eliminating per-pair interpreter dispatch and object allocation overhead.
+
+All bodies are initialized with prograde circular orbit velocity perpendicular to their position vector:
+
+$$v = \sqrt{\frac{GM}{r}}$$
+
+### Gravitational Softening
+
+To prevent force singularities during close encounters ($r \to 0$), the gravitational force is softened:
+
+$$F = \frac{G m_1 m_2}{(r^2 + \epsilon^2)^{3/2}} \cdot r$$
+
+where $\epsilon$ is the softening length. This bounds the maximum force at small separations while preserving accuracy at large distances.
+
+### Current Simplifications
+
+- Bodies are point masses, no physical radius, no rotation
+- 2D only, no z-axis
+- No relativistic corrections
+- No gas, radiation, or non-gravitational forces
+- Merges are momentum-conserving but instantaneous, no accretion disk or gradual coalescence
+- Barnes-Hut $\theta$ is fixed at 0.5, no adaptive accuracy
 
 ## Architecture
+
+### Simulation Pipeline
+
+```
+JSON Config / generate_spiral()
+        │
+        ▼
+  Body Initialization
+  (position, mass, prograde velocity v = √(GM/r))
+        │
+        ▼
+  leapfrog_step(is_first_step=True)
+  Bootstrap: compute initial acceleration a₀
+        │
+        ▼
+┌─────────────────────────────────────────┐
+│           Physics Thread                │
+│                                         │
+│  ┌─ Kick 1:  v_{t+½} = vₜ + aₜ·Δt/2      │
+│  │                                      │
+│  ├─ Drift:   x_{t+1} = xₜ + v_{t+½}·Δt   │
+│  │                                      │
+│  ├─ Force:   a_{t+1} = F(x_{t+1})       │
+│  │           Barnes-Hut O(N log N)      │
+│  │                                      │
+│  └─ Kick 2:  v_{t+1} = v_{t+½} + a_{t+1}·Δt/2
+│                                         │
+│   a_{t+1} cached → reused as aₜ          │
+│   next step (no redundant tree build)   │
+└──────────────────┬──────────────────────┘
+                   │ threading.Lock
+┌──────────────────▼──────────────────────┐
+│           Render Thread                 │
+│                                         │
+│  world_to_screen() → camera transform   │
+│  screen.set_at() → pixel rendering      │
+│  blur_surface → motion trail effect     │
+└─────────────────────────────────────────┘
+```
+
+The `is_first_step` flag is an architectural optimization that eliminates a redundant $O(N \log N)$ tree traversal on frame zero. Because the final acceleration $\vec{a}_{t+1}$ computed at the end of step $i$ is mathematically identical to the initial acceleration $\vec{a}_t$ required at the start of step $i+1$, it is cached and reused, the tree is built exactly once per step, never twice.
+
+### Repository Structure
 
 ```text
 space-sim/
 ├── src/
-│   ├── core/       # Body model, gravity, and integrators
+│   ├── core/       # Body model, gravity, integrators, Barnes-Hut tree
 │   ├── io/         # JSON config loading
 │   ├── rendering/  # Pygame coordinate conversion and drawing helpers
 │   └── utils/      # Vector math and physical constants
-├── tests/          # Physics and regression tests
-├── benchmarks/     # Measurement and comparison scripts
-├── configs/        # Simulation initial conditions
+├── tests/          # Physics, regression, and momentum conservation tests
+├── benchmarks/     # Orbital period measurement and integrator comparison
+├── configs/        # Simulation initial conditions (JSON)
 └── DECISIONS.md    # Technical decision log
 ```
 
 ## Design Decisions
 
-The main documented decisions cover the Phase 2 integrator choice (leapfrog over Euler for stable long-term orbital behavior), the Phase 3 trail system (deque over list for O(1) insertion), and the Phase 4 profiling analysis that identified `gravitational_force` as the O(N²) bottleneck. Phase 5 will address this with NumPy vectorization and a Barnes-Hut quadtree. See `DECISIONS.md` for evidence and reasoning.
+| Phase | Decision | Chosen | Rejected               |
+|:---|:---|:---|:-----------------------|
+| 2 | Numerical integrator | Leapfrog (Störmer-Verlet) | Euler                  |
+| 3 | Trail data structure | `collections.deque(maxlen=500)` | `list.pop(0)`          |
+| 4 | Bottleneck resolution | NumPy vectorization + Barnes-Hut | Brute force $O(N^2)$   |
+| 5 | Active algorithm at N=500 | NumPy vectorized | Barnes-Hut pure Python |
+| 5 | Barnes-Hut $\theta$ | 0.5 | 0.1, 0.3, 0.7, 1.0     |
+
+See [`DECISIONS.md`](DECISIONS.md) for full technical justification and empirical evidence for each decision.
 
 ## Running It
 
+**Requirements:** Python 3.14.2+
+
 ```bash
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+
+# Install dependencies
 pip install -r requirements.txt
+```
+```
+# Run the galaxy simulation (default)
 python main.py
 ```
+or
+
+```
+# Run the solar system simulation 
+python solar_system.py
+```
+
+**Controls:**
+- `Space` pause / resume
+- `Scroll wheel` zoom in / out
 
 Run tests:
 
@@ -87,3 +218,10 @@ Measure the current Earth orbital period:
 ```bash
 python benchmarks/measure_period.py
 ```
+
+## What I Learned
+
+- **Symplectic integration matters in practice, not just theory.** Euler's energy drift isn't a textbook footnote, over a 20-year simulated horizon it accumulates over 60% energy error, making long-term orbital simulation physically meaningless. Leapfrog's bounded oscillation is the difference between a valid simulation and an invalid one.
+- **Python overhead dominates over algorithmic complexity at low N.** The profiler revealed that `gravitational_force` wasn't slow because of the math, it was slow because of per-pair Python object creation and interpreter dispatch. NumPy's 39× speedup comes almost entirely from eliminating that overhead, not from a better algorithm.
+- **Big-O complexity is not the same as real-world performance.** Barnes-Hut is theoretically $O(N \log N)$ vs $O(N^2)$ brute force, yet it ran 3× *slower* at N=500. The tree construction, recursive traversal, and Python object overhead cost more than the algorithmic saving at this scale. Complexity class only tells you how something scales, not how it performs right now.
+- **Caching intermediate computation state is an architectural decision, not a micro-optimization.** The `is_first_step` flag exists because recomputing $\vec{a}_t$ at the start of every frame would waste an entire $O(N \log N)$ tree traversal that was already computed at the end of the previous frame. Recognizing that consecutive Leapfrog steps share an acceleration value turned a redundant calculation into a free cache hit.
