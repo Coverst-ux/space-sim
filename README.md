@@ -1,5 +1,8 @@
 # Space Simulation
 
+![Galaxy Simulation](simulation.gif)
+
+
 A Python 2D orbital simulation focused on measurable physics, not only visuals. The current version models the Sun-Earth system with Newtonian gravity and a leapfrog integrator.
 
 ## What This Is
