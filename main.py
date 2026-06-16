@@ -15,16 +15,17 @@ leapfrog_step(bodies, 3600, is_first_step=True)
 camera = Camera(SCREEN_W, SCREEN_H)
 camera.zoom = 800 / (4 * 1.496e11)
 running = True
+paused = False
 
 def physics_loop():
     while running:
-        with lock:
-            leapfrog_step(bodies, 3600)
+        if not paused:
+            with lock:
+                leapfrog_step(bodies, 3600)
 
 t = threading.Thread(target=physics_loop)
 t.daemon = True
 t.start()
-
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -34,6 +35,9 @@ while running:
                 camera.zoom_in()
             elif event.button == 5:
                 camera.zoom_out()
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                paused = not paused
 
     blur_surface = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
     blur_surface.fill((0, 0, 0, 25))
