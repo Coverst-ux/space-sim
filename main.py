@@ -113,17 +113,14 @@ while running:
             factor = (current_log - min_log) / log_range
             factor = max(0.0, min(1.0, factor))
 
-            # Mathematical cliff: Compresses low-mid speeds to keep outer arms teal
             factor = factor ** 3.8
 
             if factor < 0.5:
-                # Stage 1 LERP: Deep Teal (20, 100, 220) -> Blazing Orange (255, 110, 0)
                 val_t = factor / 0.5
                 r = int(20 + (255 - 20) * val_t)
                 g = int(100 + (110 - 100) * val_t)
                 b = int(220 + (0 - 220) * val_t)
             else:
-                # Stage 2 LERP: Blazing Orange (255, 110, 0) -> White-Hot Yellow (255, 240, 150)
                 val_t = (factor - 0.5) / 0.5
                 r = int(255)
                 g = int(110 + (240 - 110) * val_t)
