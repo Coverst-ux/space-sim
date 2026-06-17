@@ -24,7 +24,7 @@ while running:
             elif event.button == 5:
                 camera.zoom_out()
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_p:
+            if event.key == pygame.K_SPACE :
                 paused = not paused
 
     keys = pygame.key.get_pressed()
