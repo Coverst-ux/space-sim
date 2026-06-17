@@ -2,7 +2,7 @@
 import numpy as np
 from src.core.spawn import generate_random_bodies
 from src.core.integrator import update_forces_bh, update_forces_np
-from src.utils.vector import Vector2D
+from src.utils.vector import Vector3D
 import matplotlib.pyplot as plt
 
 
