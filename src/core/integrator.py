@@ -36,7 +36,7 @@ def update_forces(bodies: list[Body]) -> None:
 
 def update_forces_bh(bodies: list[Body], theta: float = 0.1) -> None:
     size = 1.0e13
-    root = OctNode(0, 0, size)
+    root = OctNode(0, 0, 0,size)
     for body in bodies:
         root.insert(body)
 
