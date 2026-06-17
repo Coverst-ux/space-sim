@@ -14,9 +14,7 @@ camera.zoom = 800 / (4 * 1.496e11)
 running = True
 STEPS_PER_FRAME = 100
 paused = False
-
 while running:
-    # 1. Handle Events
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -26,41 +24,45 @@ while running:
             elif event.button == 5:
                 camera.zoom_out()
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
+            if event.key == pygame.K_p:
                 paused = not paused
-    # 2. Clear Screen
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]:
+        camera.rotate_azimuth(-0.05)
+    if keys[pygame.K_RIGHT]:
+        camera.rotate_azimuth(0.05)
+    if keys[pygame.K_UP]:
+        camera.rotate_elevation(0.05)
+    if keys[pygame.K_DOWN]:
+        camera.rotate_elevation(-0.05)
+
     screen.fill((0, 0, 0))
 
-    # 3. Physics Updates
     if not paused:
         for _ in range(STEPS_PER_FRAME):
             leapfrog_step(bodies, 3600)
             for body in bodies:
                 body.record_trail()
-    
-    # 4. Rendering (With the White Line Trail Engine)
+
     for body in bodies:
-        screen_pos = camera.world_to_screen(body.position.x,body.position.y)
-        
-        # Draw the continuous white trail line
+        screen_pos = camera.world_to_screen(body.position.x, body.position.y, body.position.z)
+
         if len(body.trail) > 1:
-            pixel_trail = [camera.world_to_screen(wx, wy) for wx, wy in body.trail]
+            pixel_trail = [camera.world_to_screen(wx, wy, wz) for wx, wy, wz in body.trail]
             pygame.draw.lines(screen, (255, 255, 255), False, pixel_trail, 2)
 
-        # Draw the physical body on top of its trail
-        # Making the Sun stand out visually from the planets
         if body.name.lower() == "sun":
-            radius = int(25*(camera.zoom / ( 800/ (4* 1.496e11))))
+            radius = int(25 * (camera.zoom / (800 / (4 * 1.496e11))))
             radius = max(4, radius)
         else:
             scale_factor = camera.zoom / (800 / (4 * 1.496e11))
             radius = int(5 * scale_factor)
-            radius = max(3, radius) # Force planets to stay a clear 3-pixel dot minimum
-            
+            radius = max(3, radius)
+
         pygame.draw.circle(screen, body.color, screen_pos, radius)
 
-    # 5. Flip Display
     pygame.display.flip()
-    clock.tick(60)  # 60 fps
+    clock.tick(60)
 
 pygame.quit()

@@ -1,19 +1,19 @@
 import numpy as np
-from src.core.quadtree import QuadNode
-from src.utils.vector import Vector2D
+from src.core.octree import OctNode
+from src.utils.vector import Vector3D
 from src.core.body import Body
 from src.core.physics import gravitational_force_softened
-from utils.constants import EPSILON, G
+from src.utils.constants import EPSILON, G
 
 
 def euler_step(bodies: list[Body], dt: float) -> None:
-    forces = {body.name: Vector2D(0,0) for body in bodies}
+    forces = {body.name: Vector3D(0, 0,0) for body in bodies}
     for i, body1 in enumerate(bodies):
         for j, body2 in enumerate(bodies):
             if i>=j:
                 continue
             f = gravitational_force_softened(body1.mass, body2.mass, body1.position,  body2.position)
-            
+
             forces[body1.name] = forces[body1.name] + f
             forces[body2.name] = forces[body2.name] + (f* -1)
             
@@ -25,7 +25,7 @@ def euler_step(bodies: list[Body], dt: float) -> None:
                                
 def update_forces(bodies: list[Body]) -> None:
     """Helper to calculate and assign accelerations to all bodies once."""
-    forces = {body.name: Vector2D(0, 0) for body in bodies}
+    forces = {body.name: Vector3D(0, 0, 0) for body in bodies}
     for i, body1 in enumerate(bodies):
         for j, body2 in enumerate(bodies):
             if i >= j:
@@ -36,7 +36,7 @@ def update_forces(bodies: list[Body]) -> None:
 
 def update_forces_bh(bodies: list[Body], theta: float = 0.1) -> None:
     size = 1.0e13
-    root = QuadNode(0,0,size)
+    root = OctNode(0, 0, size)
     for body in bodies:
         root.insert(body)
 
@@ -47,7 +47,7 @@ def update_forces_bh(bodies: list[Body], theta: float = 0.1) -> None:
         body.acceleration = f * (1 / body.mass)
 
 def update_forces_np(bodies: list[Body]):
-    positions = np.array([[b.position.x, b.position.y] for b in bodies])
+    positions = np.array([[b.position.x, b.position.y, b.position.z] for b in bodies])
     masses = np.array([b.mass for b in bodies])
 
     diff_pos = positions[np.newaxis, :] - positions[:, np.newaxis]
@@ -58,7 +58,7 @@ def update_forces_np(bodies: list[Body]):
     force_vec = (force_mag / dist)[..., np.newaxis] * diff_pos
     total_force = force_vec.sum(axis=1)
     for i, body in enumerate(bodies):
-        body.acceleration = Vector2D(float(total_force[i][0]), float(total_force[i][1])) * (1 / body.mass)
+        body.acceleration = Vector3D(float(total_force[i][0]), float(total_force[i][1]), float(total_force[i][2])) * (1 / body.mass)
 
 
 def leapfrog_step(bodies: list[Body], dt: float, is_first_step: bool = False) -> None:

@@ -1,6 +1,6 @@
 import math
-from core.physics import gravitational_force_softened
-from utils.vector import Vector3D
+from src.core.physics import gravitational_force_softened
+from src.utils.vector import Vector3D
 
 
 class OctNode:
