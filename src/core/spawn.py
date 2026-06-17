@@ -22,9 +22,9 @@ def generate_random_bodies(n:int)-> list[Body]:
         r = random.uniform(1e11, 1e12)
         x = r * math.cos(angle)
         y = r * math.sin(angle)
-        z = 0
+        z = random.gauss(0, 1e10)
         v_circ = math.sqrt(G * core_mass / r)
-        vx = -v_circ * math.sin(angle)  # perpendicular to position
+        vx = -v_circ * math.sin(angle)
         vy =  v_circ * math.cos(angle)
         vz = 0
         r_norm = (r - 1e11) / (1e12 - 1e11)
@@ -60,7 +60,7 @@ def generate_spiral(n:int)-> list[Body]:
         max_r = 2e12
         r = min_r + (theta ** 0.85/ (4* math.pi)) * (max_r - min_r)
         angle = theta + arm_base_angle + random.gauss(0, 0.3)
-        x,y,z = r * math.cos(angle), r * math.sin(angle), 0
+        x,y,z = r * math.cos(angle), r * math.sin(angle), random.gauss(0, 1e10)
         v_circ = math.sqrt(G * core_mass / r)
         vx = -v_circ * math.sin(angle)
         vy = v_circ * math.cos(angle)
