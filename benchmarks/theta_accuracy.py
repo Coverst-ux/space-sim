@@ -12,7 +12,7 @@ def total_force_magnitude(bodies):
     return [body.acceleration.magnitude() for body in bodies]
 
 
-def run_theta_test(theta_values, n_bodies=50):
+def run_theta_test(theta_values, n_bodies=500):
     bodies_ref = generate_random_bodies(n_bodies)
 
     # Ground truth: NumPy exact forces
