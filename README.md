@@ -1,9 +1,13 @@
 # Space Simulation
 
-![Galaxy Simulation](simulation.gif)
+## Galaxy/N-body Simulation
+![Galaxy Simulation](output.gif)
 
+## Solar System Simulation
 
-A 2D gravitational N-body simulation engine implementing Leapfrog (Störmer-Verlet) integration and the Barnes-Hut spatial partitioning algorithm ($O(N \log N)$), achieving a 39× speedup over brute force at N=500 via NumPy vectorization. Orbital accuracy validated against NASA Planetary Fact Sheet data across all 8 planets, with a maximum period error of 1.1% on Neptune's 60,182-day orbit.
+![Solar System Simulation](solar_system.gif)
+
+A 3D gravitational N-body simulation engine implementing Leapfrog (Störmer-Verlet) integration and the Barnes-Hut spatial partitioning algorithm ($O(N \log N)$), achieving a 39× speedup over brute force at N=500 via NumPy vectorization. Orbital accuracy validated against NASA Planetary Fact Sheet data across all 8 planets, with a maximum period error of 1.1% on Neptune's 60,182-day orbit.
 
 ## Performance
 
@@ -104,11 +108,11 @@ where $\epsilon$ is the softening length. This bounds the maximum force at small
 ### Current Simplifications
 
 - Bodies are point masses, no physical radius, no rotation
-- 2D only, no z-axis
 - No relativistic corrections
 - No gas, radiation, or non-gravitational forces
 - Merges are momentum-conserving but instantaneous, no accretion disk or gradual coalescence
 - Barnes-Hut $\theta$ is fixed at 0.5, no adaptive accuracy
+- Orthographic projection only, no perspective
 
 ## Architecture
 
@@ -177,6 +181,8 @@ space-sim/
 | 4 | Bottleneck resolution | NumPy vectorization + Barnes-Hut | Brute force $O(N^2)$   |
 | 5 | Active algorithm at N=500 | NumPy vectorized | Barnes-Hut pure Python |
 | 5 | Barnes-Hut $\theta$ | 0.5 | 0.1, 0.3, 0.7, 1.0     |
+| 6 | 3D projection | Orthographic | Perspective |
+| 6 | Octree child indexing | `list[8]` + bitwise | Named children |
 
 See [`DECISIONS.md`](DECISIONS.md) for full technical justification and empirical evidence for each decision.
 
