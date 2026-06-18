@@ -7,7 +7,7 @@
 
 ![Solar System Simulation](solar_system.gif)
 
-A 3D gravitational N-body simulation engine implementing Leapfrog (Störmer-Verlet) integration and the Barnes-Hut spatial partitioning algorithm ($O(N \log N)$), achieving a 39× speedup over brute force at N=500 via NumPy vectorization. Orbital accuracy validated against NASA Planetary Fact Sheet data across all 8 planets, with a maximum period error of 1.1% on Neptune's 60,182-day orbit.
+A 3D gravitational N-body simulation engine implementing Leapfrog (Störmer-Verlet) integration and the Barnes-Hut spatial partitioning algorithm ( $O(N \log N)$ ), achieving a 39× speedup over brute force at N=500 via NumPy vectorization. Orbital accuracy validated against NASA Planetary Fact Sheet data across all 8 planets, with a maximum period error of 1.1% on Neptune's 60,182-day orbit.
 
 ## Performance
 
