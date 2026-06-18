@@ -20,6 +20,7 @@ A 3D gravitational N-body simulation engine implementing Leapfrog (Störmer-Verl
 | Barnes-Hut pure Python | 100.1s | 3x slower |
 
 At N=500, NumPy vectorization dominates by replacing Python-level loop dispatch and per-pair object allocation with contiguous memory operations executed by compiled C routines. Although Barnes-Hut reduces force evaluation complexity from $O(N^2)$ to $O(N \log N)$, its advantage is outweighed at this scale by quadtree construction and recursive traversal costs in pure Python. The implementation demonstrates the algorithmic architecture and expected scaling behavior, but interpreter overhead prevents reaching the particle counts where asymptotic gains dominate. This motivates the planned NumPy + Barnes-Hut hybrid implementation described in the Design Decisions section.
+
 **Benchmark environment:** Python 3.14 · Intel i5-14400F · Windows 11 Pro
 
 ## Simulation Accuracy
