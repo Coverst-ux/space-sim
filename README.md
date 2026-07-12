@@ -177,13 +177,13 @@ space-sim/
 
 | Phase | Decision | Chosen | Rejected               |
 |:---|:---|:---|:-----------------------|
-| 2 | Numerical integrator | Leapfrog (Störmer-Verlet) | Euler                  |
-| 3 | Trail data structure | `collections.deque(maxlen=500)` | `list.pop(0)`          |
-| 4 | Bottleneck resolution | NumPy vectorization + Barnes-Hut | Brute force $O(N^2)$   |
-| 5 | Active algorithm at N=500 | NumPy vectorized | Barnes-Hut pure Python |
+| 1 | Numerical integrator | Leapfrog (Störmer-Verlet) | Euler                  |
+| 2 | Trail data structure | `collections.deque(maxlen=500)` | `list.pop(0)`          |
+| 3 | Bottleneck resolution | NumPy vectorization + Barnes-Hut | Brute force $O(N^2)$   |
+| 4 | Active algorithm at N=500 | NumPy vectorized | Barnes-Hut pure Python |
 | 5 | Barnes-Hut $\theta$ | 0.5 | 0.1, 0.3, 0.7, 1.0     |
 | 6 | 3D projection | Orthographic | Perspective |
-| 6 | Octree child indexing | `list[8]` + bitwise | Named children |
+| 7 | Octree child indexing | `list[8]` + bitwise | Named children |
 
 See [`DECISIONS.md`](DECISIONS.md) for full technical justification and empirical evidence for each decision.
 
