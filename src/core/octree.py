@@ -21,7 +21,7 @@ class OctNode:
             self.body = body
             return
         elif self.body is not None and self.children[0] is None:
-
+            
             old_body = self.body
             self.body = None
             self.subdivide()
@@ -84,22 +84,37 @@ class OctNode:
         if self.body is not None and self.children[0] is None:
             if self.body is body:
                 return Vector3D(0, 0, 0)
-            return gravitational_force_softened(body.mass, self.body.mass, body.position, self.body.position)
+            return gravitational_force_softened(
+                body.mass,
+                self.body.mass,
+                body.position,
+                self.body.position,
+            )
 
-        d = math.sqrt((body.position.x - self.center_of_mass_x) ** 2 +
-                      (body.position.y - self.center_of_mass_y) ** 2 +
-                      (body.position.z - self.center_of_mass_z) ** 2)
+        d = math.sqrt(
+            (body.position.x - self.center_of_mass_x) ** 2
+            + (body.position.y - self.center_of_mass_y) ** 2
+            + (body.position.z - self.center_of_mass_z) ** 2
+        )
+
         if d == 0:
             return Vector3D(0, 0, 0)
 
         if self.size / d < theta:
             return gravitational_force_softened(
-                body.mass, self.total_mass, body.position,
-                Vector3D(self.center_of_mass_x, self.center_of_mass_y, self.center_of_mass_z)
+                body.mass,
+                self.total_mass,
+                body.position,
+                Vector3D(
+                    self.center_of_mass_x,
+                    self.center_of_mass_y,
+                    self.center_of_mass_z,
+                ),
             )
 
         init_force = Vector3D(0, 0, 0)
         for child in self.children:
             if child is not None:
                 init_force = init_force + child.calculate_force(body, theta)
+
         return init_force
