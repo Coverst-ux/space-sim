@@ -34,7 +34,7 @@ def update_forces(bodies: list[Body]) -> None:
             forces[body1.name] = forces[body1.name] + f
             forces[body2.name] = forces[body2.name] + (f * -1)
 
-def update_forces_bh(bodies: list[Body], theta: float = 0.1) -> None:
+def update_forces_bh(bodies: list[Body], theta: float = 0.5) -> None:
     size = 1.0e13
     root = OctNode(0, 0, 0,size)
     for body in bodies:
