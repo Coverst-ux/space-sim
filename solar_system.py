@@ -1,6 +1,8 @@
 import pygame
 from src.io.loader import config_loader
-from src.core.integrator import leapfrog_step
+import sys
+sys.path.append(r"C:\Users\Admin\Documents\hell_in_a_folder\bindings")
+import space_sim_cpp
 from src.rendering.camera import Camera
 
 pygame.init()
@@ -8,7 +10,7 @@ SCREEN_W, SCREEN_H = 800, 800
 screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
 clock = pygame.time.Clock()
 
-bodies = config_loader()
+physics_bodies, render_bodies = config_loader()
 camera = Camera(SCREEN_W, SCREEN_H)
 camera.zoom = 800 / (4 * 1.496e11)
 running = True
@@ -24,7 +26,7 @@ while running:
             elif event.button == 5:
                 camera.zoom_out()
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE :
+            if event.key == pygame.K_SPACE:
                 paused = not paused
 
     keys = pygame.key.get_pressed()
@@ -41,18 +43,19 @@ while running:
 
     if not paused:
         for _ in range(STEPS_PER_FRAME):
-            leapfrog_step(bodies, 3600)
-            for body in bodies:
-                body.record_trail()
+            space_sim_cpp.leapfrog_step(physics_bodies, 3600)
+        for rb in render_bodies:
+            rb.record_trail()
 
-    for body in bodies:
-        screen_pos = camera.world_to_screen(body.position.x, body.position.y, body.position.z)
+    for rb in render_bodies:
+        screen_pos = camera.world_to_screen(rb.position.x, rb.position.y, rb.position.z)
 
-        if len(body.trail) > 1:
-            pixel_trail = [camera.world_to_screen(wx, wy, wz) for wx, wy, wz in body.trail]
+
+        if len(rb.trail) > 1:
+            pixel_trail = [camera.world_to_screen(wx, wy, wz) for wx, wy, wz in rb.trail]
             pygame.draw.lines(screen, (255, 255, 255), False, pixel_trail, 2)
 
-        if body.name.lower() == "sun":
+        if rb.name.lower() == "sun":
             radius = int(25 * (camera.zoom / (800 / (4 * 1.496e11))))
             radius = max(4, radius)
         else:
@@ -60,7 +63,7 @@ while running:
             radius = int(5 * scale_factor)
             radius = max(3, radius)
 
-        pygame.draw.circle(screen, body.color, screen_pos, radius)
+        pygame.draw.circle(screen, rb.color, screen_pos, radius)
 
     pygame.display.flip()
     clock.tick(60)

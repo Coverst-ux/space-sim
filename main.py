@@ -2,8 +2,9 @@ import pygame
 import threading
 import math
 import random
+import time
 from src.core.spawn import generate_spiral
-from src.core.integrator import leapfrog_step
+import space_sim_cpp
 from src.rendering.camera import Camera
 
 pygame.init()
@@ -11,9 +12,9 @@ SCREEN_W, SCREEN_H = 800, 800
 screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
 clock = pygame.time.Clock()
 
-bodies = generate_spiral(750)
+physics_bodies, render_bodies = generate_spiral(750)
 lock = threading.Lock()
-leapfrog_step(bodies, 3600, is_first_step=True)
+space_sim_cpp.leapfrog_step(physics_bodies, 3600, is_first_step=True)
 camera = Camera(SCREEN_W, SCREEN_H)
 
 base_zoom = 800 / (4 * 1.496e11)
@@ -26,10 +27,11 @@ background_stars = [
 
 running = True
 paused = False
-
+frame_count = 0
+steps_taken = 0
 
 def physics_loop():
-    global running, paused
+    global running, paused, steps_taken
     while True:
         with lock:
             if not running:
@@ -38,8 +40,11 @@ def physics_loop():
 
         if should_step:
             with lock:
-                leapfrog_step(bodies, 3600)
+                space_sim_cpp.leapfrog_step(physics_bodies, 3600)
+                steps_taken += 1
 
+        else:
+            time.sleep(0.001)  # avoid busy-spinning while paused
 
 t = threading.Thread(target=physics_loop)
 t.daemon = True
@@ -76,6 +81,8 @@ while running:
     blur_surface.fill((0, 0, 0, 12))
     screen.blit(blur_surface, (0, 0))
 
+    t_render_start = time.perf_counter()
+
     for star in background_stars:
         star_pos = camera.world_to_screen(star[0], star[1], star[2])
         try:
@@ -85,11 +92,12 @@ while running:
 
     render_snapshot = []
     with lock:
-        for body in bodies:
+        for rb in render_bodies:
             render_snapshot.append((
-                body.position.x, body.position.y, body.position.z,
-                body.velocity.x, body.velocity.y, body.velocity.z
+                rb.position.x, rb.position.y, rb.position.z,
+                rb.velocity.x, rb.velocity.y, rb.velocity.z
             ))
+        elapsed_time = steps_taken * 3600
 
     log_speeds = []
     for x, y, z, vx, vy, vz in render_snapshot:
@@ -137,8 +145,17 @@ while running:
         except Exception:
             continue
 
+    t_render_end = time.perf_counter()
+    render_ms = (t_render_end - t_render_start) * 1000
+
+    frame_count += 1
+    if frame_count % 60 == 0:
+        print(f"render: {render_ms:.2f}ms")
+
     fps = clock.get_fps()
-    fps_text = font.render(f"FPS: {fps:.0f} | N: {len(bodies)}", True, (180, 180, 180))
+    fps_text = font.render(f"FPS: {fps:.0f} | N: {len(render_bodies)} | t={elapsed_time:.0f}s", True, (180, 180, 180))
+    text_rect = fps_text.get_rect(topleft=(10, 10))
+    pygame.draw.rect(screen, (0, 0, 0), text_rect.inflate(10, 6))
     screen.blit(fps_text, (10, 10))
 
     pygame.display.flip()
