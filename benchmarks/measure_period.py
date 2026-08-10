@@ -1,10 +1,14 @@
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import math
-from src.core.integrator import leapfrog_step
-from src.io.loader import config_loader
+import space_sim_cpp
+from src.core.integrator import leapfrog_step as py_leapfrog_step
+from src.io.loader import config_loader_python
 
-def measure_all_periods():
+
+def measure_all_periods_python():
     # Load a fresh batch of bodies from your config
-    bodies = config_loader()
+    bodies = config_loader_python()
     sun = bodies[0]
     
     # Loop through every planet starting from index 1 to the end
@@ -12,7 +16,7 @@ def measure_all_periods():
         planet = bodies[i]
         
         # Reload bodies every time so each planet starts fresh from Day 0
-        current_bodies = config_loader()
+        current_bodies = config_loader_python()
         current_sun = current_bodies[0]
         current_planet = current_bodies[i]
         
@@ -27,7 +31,7 @@ def measure_all_periods():
         
         # Run your exact math loop for this specific planet
         while abs(total_angle) < (2 * math.pi):
-            leapfrog_step(current_bodies, dt)
+            py_leapfrog_step(current_bodies, dt)
             step += 1
             
             dx = current_planet.position.x - current_sun.position.x
@@ -47,4 +51,4 @@ def measure_all_periods():
         days = step * dt / 86400  # convert seconds to days
         print(f"{current_planet.name} orbital period: {days:.2f} days")
 
-measure_all_periods()
+measure_all_periods_python()

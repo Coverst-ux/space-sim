@@ -1,8 +1,9 @@
 import pytest
-
-from core.body import Body
-from core.octree import OctNode
-from utils.vector import Vector3D
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from src.core.body import Body
+from src.core.octree import OctNode
+from src.utils.vector import Vector3D
 
 
 def test_get_octant():

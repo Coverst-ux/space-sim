@@ -1,17 +1,24 @@
 import math
 
+
 class Camera:
     def __init__(self, screen_w: int, screen_h: int):
         self.offset_x = screen_w // 2
         self.offset_y = screen_h // 2
         self.zoom = 1.0
-        self.azimuth= 0
-        self.elevation= math.pi / 2
+        self.azimuth = 0
+        self.elevation = math.pi / 2
 
     def world_to_screen(self, wx, wy, wz):
+        if not all(math.isfinite(value) for value in (wx, wy, wz)):
+            return None
+
         px, py = self.project(wx, wy, wz)
-        sx = int(px * self.zoom + self.offset_x)
-        sy = int(py * self.zoom + self.offset_y)
+        if not all(math.isfinite(value) for value in (px, py)):
+            return None
+
+        sx = round(px * self.zoom + self.offset_x)
+        sy = round(py * self.zoom + self.offset_y)
         return sx, sy
     
     def zoom_in(self, factor: float = 1.1): self.zoom *= factor

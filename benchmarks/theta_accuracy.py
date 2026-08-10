@@ -1,6 +1,8 @@
-# benchmarks/theta_accuracy.py
+# benchmarks/theta_accuracy.py\
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import numpy as np
-from src.core.spawn import generate_random_bodies
+from src.core.spawn import generate_random_bodies_python
 from src.core.integrator import update_forces_bh, update_forces_np
 from src.utils.vector import Vector3D
 import matplotlib.pyplot as plt
@@ -13,7 +15,7 @@ def total_force_magnitude(bodies):
 
 
 def run_theta_test(theta_values, n_bodies=500):
-    bodies_ref = generate_random_bodies(n_bodies)
+    bodies_ref = generate_random_bodies_python(n_bodies)
 
     # Ground truth: NumPy exact forces
     update_forces_np(bodies_ref)
@@ -22,7 +24,7 @@ def run_theta_test(theta_values, n_bodies=500):
     results = {}
     for theta in theta_values:
         # Reset bodies to same initial state
-        bodies_test = generate_random_bodies(n_bodies)
+        bodies_test  = generate_random_bodies_python(n_bodies)
         # Copy positions from reference bodies so comparison is fair
         for i, body in enumerate(bodies_test):
             body.position = bodies_ref[i].position
