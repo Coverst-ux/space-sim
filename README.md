@@ -3,6 +3,8 @@
 ## Stardance 2026
 **New pulsar and neutron-star extension written in C++. View the extension repository here: [Space_Sim_C++](https://github.com/Coverst-ux/Space-sim-Cpp-Port)**
 
+I used AI for reviewing, planning, debugging advice, and research while making sure I understood everything that was said before applying it.
+
 ## Galaxy/N-body Simulation
 ![Galaxy Simulation](output.gif)
 
