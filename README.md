@@ -7,6 +7,9 @@
 
 ![Solar System Simulation](solar_system.gif)
 
+## Binary-Merger Simulation
+![Binary-Merger](Binary_Merger.gif)
+
 A 3D gravitational N-body simulation engine implementing Leapfrog (Störmer-Verlet) integration and the Barnes-Hut spatial partitioning algorithm ($O(N \log N)$). The C++ physics backend achieves up to a **6.1× speedup over the NumPy implementation at N=1,300**, building on an earlier **39.6× improvement achieved by NumPy over the pure-Python brute-force implementation at N=500**. Orbital accuracy validated against NASA Planetary Fact Sheet data across all 8 planets, with a maximum period error of 1.1% on Neptune's 60,182-day orbit.
 
 ## Performance
@@ -22,7 +25,7 @@ A 3D gravitational N-body simulation engine implementing Leapfrog (Störmer-Verl
 ## Performance History
 
 ### Phase 1: Pure Python → NumPy (N=750)
-(OUTDATED) At N=750, NumPy vectorization dominates by replacing Python-level loop dispatch and per-pair object allocation with contiguous memory operations executed by compiled C routines. Although Barnes-Hut reduces force evaluation complexity from $O(N^2)$ to $O(N \log N)$, its advantage is outweighed at this scale by quadtree construction and recursive traversal costs in pure Python. The implementation demonstrates the algorithmic architecture and expected scaling behavior, but interpreter overhead prevents reaching the particle counts where asymptotic gains dominate. This motivates the planned NumPy + Barnes-Hut hybrid implementation described in the Design Decisions section.
+(OUTDATED) At N=750, NumPy vectorization dominates by replacing Python-level loop dispatch and per-pair object allocation with contiguous memory operations executed by compiled C routines. Although Barnes-Hut reduces force evaluation complexity from $O(N^2)$ to $O(N \log N)$, its advantage is outweighed at this scale by octree construction and recursive traversal costs in pure Python. The implementation demonstrates the algorithmic architecture and expected scaling behavior, but interpreter overhead prevents reaching the particle counts where asymptotic gains dominate. This motivates the planned NumPy + Barnes-Hut hybrid implementation described in the Design Decisions section.
 
 ### Phase 2: NumPy → C++ (N=750+)
 NumPy's 39.6x speedup was great at N=750 recording a stable 30 fps, but it hit a hard performance ceiling as N grew. Python overhead that vectorization couldn't fully escape at higher N was stagnating any improvements to the stability and performance of the simulation. After a few brainstorming sessions, porting the main physics core into C++ was chosen as the next concrete step. Various things such as the Leapfrog integrator, gravitational physics, and the Barnes-Hut spatial partitioning algorithm were all fully rewritten in C++. Instead of programming the whole simulation project from scratch, pybind11 was used as a bridge to Python so the existing Pygame rendering pipeline didn't need to be rewritten.
@@ -110,7 +113,7 @@ All bodies including the Sun are integrated each step. The Sun's displacement is
 
 ### N-body / Galaxy Simulation
 
-The galaxy simulation uses a Barnes-Hut quadtree to reduce gravitational force computation from $O(N^2)$ to $O(N \log N)$. The tree recursively partitions space into quadrants. For each body, the tree is traversed and a node is treated as a single aggregate mass if it satisfies the Multipole Acceptance Criterion (MAC):
+The galaxy simulation uses a Barnes-Hut octree to reduce gravitational force computation from $O(N^2)$ to $O(N \log N)$. The tree recursively partitions space into octants. For each body, the tree is traversed and a node is treated as a single aggregate mass if it satisfies the Multipole Acceptance Criterion (MAC):
 
 $$\frac{s}{d} < \theta$$
 
