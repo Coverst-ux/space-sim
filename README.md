@@ -1,5 +1,7 @@
 # Space Simulation
 
+An interactive 3D simulator exploring space phenomena such as planetary orbits, galaxies, stellar collisions, pulsars, and many more to come through visual simulations. 
+
 ## Stardance 2026
 **New pulsar and neutron-star extension written in C++. View the extension repository here: [Space_Sim_C++](https://github.com/Coverst-ux/Space-sim-Cpp-Port)**
 
