@@ -39,13 +39,26 @@ def trace_field_line(seed_position, direction_sign):
             break
     return field_line_points
 
-positive_points = trace_field_line(seed_position, 1)
-negative_points = trace_field_line(seed_position, -1)
 
-field_line_points = (
-    list(reversed(negative_points))
-    + positive_points[1:]
-)
+seed_distances = [1.3, 1.7, 2.2]
+field_lines =[]
+
+for distance in seed_distances:
+    for side in (1, -1):
+        seed_position= sim.Vector3D(
+            side * distance * config.stellar_radius,
+            0.0,
+            0.0
+        )
+        positive_half = trace_field_line(seed_position, 1)
+        negative_half = trace_field_line(seed_position, -1)
+        complete_line = (
+                list(reversed(negative_half))
+                + positive_half[1:]
+            )
+        field_lines.append(complete_line)
+        
+
 clock = pygame.time.Clock()
 
 running = True
@@ -93,20 +106,21 @@ while running:
             
     
     # rendering
-    screen_points = []
-    for point in field_line_points:
-        screen_x = visualization_area.centerx + point.x * scale
-        screen_y = visualization_area.centery - point.z * scale
-        screen_points.append((screen_x, screen_y))
-
-    if len(screen_points) >= 2:
-        pygame.draw.lines(
-            screen,
-            (255, 0, 0),
-            False,
-            screen_points,
-            2
-        )
+    for field_line in field_lines:
+        screen_points = []
+        for point in field_line:
+            screen_x = visualization_area.centerx + point.x * scale
+            screen_y = visualization_area.centery - point.z * scale
+            screen_points.append((screen_x, screen_y))
+            
+        if len(screen_points) >= 2:
+            pygame.draw.lines(
+                screen,
+                (255, 0, 0),
+                False,
+                screen_points,
+                2
+            )
 
         
     
