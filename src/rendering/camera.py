@@ -35,3 +35,17 @@ class Camera:
         self.offset_x += dx
         self.offset_y += dy
 
+    def world_to_camera(self, wx, wy, wz):
+        rotated_x = wx * math.cos(self.azimuth) - wy * math.sin(self.azimuth)
+        
+        rotated_y = ( wx * math.sin(self.azimuth) + wy * math.cos(self.azimuth))
+        
+        screen_y = (
+            rotated_y * math.sin(self.elevation) - wz * math.cos(self.elevation)
+        )
+        
+        depth = (
+            rotated_y * math.cos(self.elevation) + wz * math.sin(self.elevation)
+        )
+        
+        return rotated_x, screen_y, depth
