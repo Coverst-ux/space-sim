@@ -16,10 +16,36 @@ config = sim.PulsarConfig(
     0.1, # omega
     sim.Vector3D(0.0,0.0,1.0)
 )
-position = sim.Vector3D(0.0, 0.0, 1.5)
-visual_length = config.stellar_radius * 0.75
+seed_position = sim.Vector3D(1.5 * config.stellar_radius, 0, 0)
+step_length = 0.02 * config.stellar_radius  
 scale = 60
+maximum_steps = 2000
+outer_boundary = 8 * config.stellar_radius
 
+
+# calculation
+def trace_field_line(seed_position, direction_sign):
+    position = seed_position
+    field_line_points = [position]
+    
+    for _ in range(maximum_steps):
+        B = sim.get_magnetic_field(config, position)
+        direction = B.normalized()
+        displacement = direction.mult(step_length * direction_sign) 
+        position = displacement + position  
+        field_line_points.append(position)
+        distance = position.magnitude()
+        if distance <= config.stellar_radius or distance >= outer_boundary:
+            break
+    return field_line_points
+
+positive_points = trace_field_line(seed_position, 1)
+negative_points = trace_field_line(seed_position, -1)
+
+field_line_points = (
+    list(reversed(negative_points))
+    + positive_points[1:]
+)
 clock = pygame.time.Clock()
 
 running = True
@@ -60,24 +86,29 @@ while running:
         control_panel,
         width = 2
     )
-    pygame.draw.circle(screen, (0,0,255), visualization_area.center, config.stellar_radius * scale )
+    pygame.draw.circle(screen, (0,0,255), visualization_area.center, int(config.stellar_radius * scale ))
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
             
     
-    B = sim.get_magnetic_field(config, position)
-    direction = B.normalized()
-    visual_direction = direction.mult(visual_length)
-    endpoint = visual_direction + position
-    screenx = visualization_area.centerx + position.x * scale
-    screeny = visualization_area.centery - position.z * scale
-    endscreenx = visualization_area.centerx + endpoint.x * scale
-    end_screeny = visualization_area.centery - endpoint.z * scale
-    start_screen = (screenx, screeny)
-    end_screen = (endscreenx, end_screeny)
-    pygame.draw.line(screen, (255, 0, 0), start_screen, end_screen)
+    # rendering
+    screen_points = []
+    for point in field_line_points:
+        screen_x = visualization_area.centerx + point.x * scale
+        screen_y = visualization_area.centery - point.z * scale
+        screen_points.append((screen_x, screen_y))
 
+    if len(screen_points) >= 2:
+        pygame.draw.lines(
+            screen,
+            (255, 0, 0),
+            False,
+            screen_points,
+            2
+        )
+
+        
     
     clock.tick(60)
     pygame.display.update()
