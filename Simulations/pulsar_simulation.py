@@ -368,8 +368,10 @@ while running:
         )
 
     screen.set_clip(visualization_area)
-        
+
     screen.blit(field_surface, (0, 0))
+    
+    screen.set_clip(None)
 
 
     dt = clock.tick(60) / 1000.0
