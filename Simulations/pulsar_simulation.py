@@ -23,13 +23,21 @@ config = sim.PulsarConfig(
     1.0, # stellar radius
     1.0, # speed of light 
     1.0, # polar field strength
-    0.1, # omega
+    1.0, # omega
     sim.Vector3D(0.0,0.0,1.0)
 )
+
+alpha = math.radians(30)
+simulation_time = 0.0
 step_length = 0.02 * config.stellar_radius  
 maximum_steps = 2000
 outer_boundary = 8 * config.stellar_radius
+font_path = pygame.font.match_font("Segoe UI")
+font = pygame.font.Font(font_path, 20)
+title_font = pygame.font.Font(font_path, 22)
+label_font = pygame.font.Font(font_path, 18)
 
+title_surface = title_font.render("Pulsar", True, (235, 240, 250))
 # calculation
 def trace_field_line(seed_position, direction_sign):
     position = seed_position
@@ -47,8 +55,59 @@ def trace_field_line(seed_position, direction_sign):
     return field_line_points
 
 
+def rotate_field_point(point, alpha, phase):
+    tilted_x = (
+        point.x * math.cos(alpha)
+        + point.z * math.sin(alpha)
+    )
+
+    tilted_y = point.y
+
+    tilted_z = (
+        -point.x * math.sin(alpha)
+        + point.z * math.cos(alpha)
+    )
+
+    rotated_x = (
+        tilted_x * math.cos(phase)
+        - tilted_y * math.sin(phase)
+    )
+
+    rotated_y = (
+        tilted_x * math.sin(phase)
+        + tilted_y * math.cos(phase)
+    )
+
+    rotated_z = tilted_z
+
+    return sim.Vector3D(
+        rotated_x,
+        rotated_y,
+        rotated_z
+    )
 
 
+def draw_beam(surface, camera, direction, length, width,  color):
+    start = sim.Vector3D(0.0,0.0,0.0)
+    end = direction.mult(length)
+    
+    start_screen = camera.world_to_screen(
+        start.x,
+        start.y,
+        start.z
+    )    
+    
+    end_screen = camera.world_to_screen(
+        end.x,
+        end.y,
+        end.z
+    )
+    
+    if start_screen is None or end_screen is None:
+        return
+    
+    pygame.draw.line(surface, color, start_screen, end_screen, round(width))
+    
 def random_star_brightness():
     roll = random.random()
 
@@ -59,16 +118,17 @@ def random_star_brightness():
     else:
         return random.randint(180, 240)
 
-seed_distances = [1.2, 1.4, 1.7, 2.0, 2.4]
-angles = [i * math.pi / 3 for i in range(6)]
-field_lines =[]
+seed_radius = 1.3 * config.stellar_radius
+theta_values = [math.radians(38), math.radians(46), math.radians(54), math.radians(62), math.radians(70)]
+phi_values = [i * math.pi / 3 for i in range(6)]
+field_lines = []
 
-for distance in seed_distances:
-    for angle in angles:
+for theta in theta_values:
+    for phi in phi_values:
         seed_position= sim.Vector3D(
-            distance * config.stellar_radius * math.cos(angle),
-            distance * config.stellar_radius * math.sin(angle),
-            0.0
+            seed_radius * math.sin(theta) * math.cos(phi),
+            seed_radius * math.sin(theta) * math.sin(phi),
+            seed_radius * math.cos(theta)
         )
         positive_half = trace_field_line(seed_position, 1)
         negative_half = trace_field_line(seed_position, -1)
@@ -91,6 +151,7 @@ clock = pygame.time.Clock()
 
 running = True
 
+paused = False
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -100,6 +161,9 @@ while running:
                 camera.zoom_in()
             elif event.button == 5:
                 camera.zoom_out()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                paused = not paused
         
     keys = pygame.key.get_pressed()
 
@@ -182,38 +246,79 @@ while running:
             star_screen_pos,
             core_color=(80,140,255),
             zoom= camera.zoom,
-            base_radius= config.stellar_radius,
+            base_radius= config.stellar_radius, 
             core_radius= config.stellar_radius 
         )
     
     # rendering
+    phase = config.omega * simulation_time
+    magnetic_axis = sim.Vector3D(
+    math.sin(alpha) * math.cos(phase),
+    math.sin(alpha) * math.sin(phase),
+    math.cos(alpha)
+    )
+    
+    beam_surface = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+    beam_width = 8
+    beam_length = 30 * config.stellar_radius
+    
+    draw_beam(beam_surface, camera, magnetic_axis, beam_length, beam_width * 1.8, (100, 170, 255, 35))
+    draw_beam(beam_surface, camera, magnetic_axis, beam_length, beam_width * 1.3, (120, 185, 255, 70))
+    draw_beam(beam_surface, camera, magnetic_axis, beam_length, beam_width, (170, 220, 255, 130))
+
+    draw_beam(beam_surface, camera, magnetic_axis.mult(-1), beam_length, beam_width * 1.8, (100, 170, 255, 35))
+    draw_beam(beam_surface, camera, magnetic_axis.mult(-1), beam_length, beam_width * 1.3, (120, 185, 255, 70))
+    draw_beam(beam_surface, camera, magnetic_axis.mult(-1), beam_length, beam_width, (170, 220, 255, 130))
+    screen.blit(beam_surface,(0,0))
+    config.magnetic_axis = magnetic_axis
+    # TODO:: Improve field line depth and visualization
     field_surface = pygame.Surface(
         screen.get_size(),
         pygame.SRCALPHA
     )
 
     star_radius = config.stellar_radius
+    field_line_width = 1 
 
     for field_line in field_lines:
-        visible_segments = []
-        current_segment = []
 
-        for point in field_line:
-            px, py, depth = camera.world_to_camera(
-                point.x,
-                point.y,
-                point.z
+        for i in range(len(field_line) - 1):
+            point1 = rotate_field_point(field_line[i], alpha, phase)
+            point2 = rotate_field_point(field_line[i+1], alpha, phase)
+
+            px1, py1, depth1 = camera.world_to_camera(
+                point1.x,
+                point1.y,
+                point1.z
+            )
+            
+            px2, py2, depth2 = camera.world_to_camera(
+                point2.x,
+                point2.y,
+                point2.z
+            )
+            
+                
+
+            screen_x1 = round(
+                px1 * camera.zoom + camera.offset_x
+            )
+            
+            screen_x2 = round(
+                px2 * camera.zoom + camera.offset_x
             )
 
-            screen_x = round(
-                px * camera.zoom + camera.offset_x
+            screen_y1 = round(
+                py1 * camera.zoom + camera.offset_y
+            )
+            screen_y2= round(
+                py2 * camera.zoom + camera.offset_y
             )
 
-            screen_y = round(
-                py * camera.zoom + camera.offset_y
-            )
-
-            projected_distance_squared = px * px + py * py
+            segment_depth = (depth1 + depth2) / 2
+            mid_px = (px1 + px2) / 2
+            mid_py = (py1 + py2) / 2
+            projected_distance_squared = (mid_px * mid_px + mid_py * mid_py)
             star_radius_squared = star_radius * star_radius
 
             hidden_by_star = False
@@ -224,43 +329,50 @@ while running:
                     - projected_distance_squared
                 )
 
-                if depth < star_surface_depth:
+                if segment_depth < star_surface_depth:
                     hidden_by_star = True
 
             if hidden_by_star:
-                if len(current_segment) >= 2:
-                    visible_segments.append(current_segment)
-
-                current_segment = []
                 continue
-
-            current_segment.append(
-                (screen_x, screen_y)
-            )
-
-        if len(current_segment) >= 2:
-            visible_segments.append(current_segment)
-
-        for segment in visible_segments:
-            pygame.draw.lines(
+            pygame.draw.line(
                 field_surface,
-                (80, 110, 255, 40),
-                False,
-                segment,
-                7
+                (180, 210, 255, 210),
+                (screen_x1, screen_y1),
+                (screen_x2, screen_y2),
+                field_line_width
             )
-
-            pygame.draw.lines(
-                field_surface,
-                (180, 205, 255, 190),
-                False,
-                segment,
-                2
-            )
-
-    screen.blit(field_surface, (0, 0))
 
     screen.set_clip(None)
+# =============================================================================
+    # CONTROL PANEL 
+    
+    panel_x = visualization_width + 28
+    panel_y = 32
+    row_gap = 34
 
-    clock.tick(60)
+
+    screen.blit(title_surface, (panel_x, panel_y))
+
+    labels = [
+        f"Omega:   {config.omega}",
+        f"Tilt:    {math.degrees(alpha):.0f}°",
+        f"Field:   {config.polar_field_strength}",
+        f"Paused:  {'Yes' if paused else 'No'}"
+    ]
+
+    for i, text in enumerate(labels):
+        label_surface = label_font.render(text, True, (200, 210, 225))
+        screen.blit(
+            label_surface,
+            (panel_x, panel_y + 48 + i * row_gap)
+        )
+
+    screen.set_clip(visualization_area)
+        
+    screen.blit(field_surface, (0, 0))
+
+
+    dt = clock.tick(60) / 1000.0
+    if not paused:
+        simulation_time += dt
     pygame.display.update()
