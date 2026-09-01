@@ -36,6 +36,12 @@ font_path = pygame.font.match_font("Segoe UI")
 font = pygame.font.Font(font_path, 20)
 title_font = pygame.font.Font(font_path, 22)
 label_font = pygame.font.Font(font_path, 18)
+section_font = pygame.font.Font(font_path, 16)
+
+heading_color = (235, 240, 250)
+label_color = (165, 175, 190)
+value_color = (220, 230, 245)
+muted_color = (130, 140, 155)
 
 title_surface = title_font.render("Pulsar", True, (235, 240, 250))
 # calculation
@@ -87,26 +93,55 @@ def rotate_field_point(point, alpha, phase):
     )
 
 
-def draw_beam(surface, camera, direction, length, width,  color):
-    start = sim.Vector3D(0.0,0.0,0.0)
+def draw_beam(surface, camera, direction, length, width, color):
+    start = sim.Vector3D(0.0, 0.0, 0.0)
     end = direction.mult(length)
-    
+
     start_screen = camera.world_to_screen(
         start.x,
         start.y,
         start.z
-    )    
-    
+    )
+
     end_screen = camera.world_to_screen(
         end.x,
         end.y,
         end.z
     )
-    
+
     if start_screen is None or end_screen is None:
         return
-    
-    pygame.draw.line(surface, color, start_screen, end_screen, round(width))
+
+    dx = end_screen[0] - start_screen[0]
+    dy = end_screen[1] - start_screen[1]
+
+    screen_length = math.sqrt(dx * dx + dy * dy)
+
+    if screen_length == 0:
+        return
+
+    perpendicular_x = -dy / screen_length
+    perpendicular_y = dx / screen_length
+
+    left_end = (
+        end_screen[0] + perpendicular_x * width,
+        end_screen[1] + perpendicular_y * width
+    )
+
+    right_end = (
+        end_screen[0] - perpendicular_x * width,
+        end_screen[1] - perpendicular_y * width
+    )
+
+    pygame.draw.polygon(
+        surface,
+        color,
+        [
+            start_screen,
+            left_end,
+            right_end
+        ]
+    )
     
 def random_star_brightness():
     roll = random.random()
@@ -150,7 +185,6 @@ background_stars = [
 clock = pygame.time.Clock()
 
 running = True
-
 paused = False
 while running:
     for event in pygame.event.get():
@@ -177,7 +211,29 @@ while running:
         camera.rotate_elevation(-0.03)
 
     if keys[pygame.K_DOWN]:
-        camera.rotate_elevation(0.03)
+        camera.rotate_elevation(0.03) 
+    if keys[pygame.K_a]:
+        config.omega -= 0.01
+
+    if keys[pygame.K_d]:
+        config.omega += 0.01
+
+    config.omega = max(
+        0.05,
+        min(config.omega, 5.0)
+    )
+
+
+    if keys[pygame.K_w]:
+        alpha += math.radians(0.5)
+
+    if keys[pygame.K_s]:
+        alpha -= math.radians(0.5)
+
+    alpha = max(
+        0.0,
+        min(alpha, math.radians(90))
+    )    
         
     window_width, window_height = screen.get_size()
     visualization_width = int(window_width * 0.75)
@@ -217,9 +273,8 @@ while running:
         control_panel,
         width = 2
     )
-    
-    screen.set_clip(visualization_area)
 
+    screen.set_clip(visualization_area)
     star_screen_pos = camera.world_to_screen(0,0,0)
     
     for star in background_stars:
@@ -230,7 +285,6 @@ while running:
         )
         if star_pos is None:
             continue
-
         if visualization_area.collidepoint(star_pos):
             brightness = star[3]
             pygame.draw.circle(
@@ -239,17 +293,7 @@ while running:
                 star_pos,
                 1
             )
-    if star_screen_pos is not None:
-        draw_star(
-            screen,
-            pulsar_glow,
-            star_screen_pos,
-            core_color=(80,140,255),
-            zoom= camera.zoom,
-            base_radius= config.stellar_radius, 
-            core_radius= config.stellar_radius 
-        )
-    
+        
     # rendering
     phase = config.omega * simulation_time
     magnetic_axis = sim.Vector3D(
@@ -259,7 +303,7 @@ while running:
     )
     
     beam_surface = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
-    beam_width = 8
+    beam_width = 40
     beam_length = 30 * config.stellar_radius
     
     draw_beam(beam_surface, camera, magnetic_axis, beam_length, beam_width * 1.8, (100, 170, 255, 35))
@@ -269,17 +313,17 @@ while running:
     draw_beam(beam_surface, camera, magnetic_axis.mult(-1), beam_length, beam_width * 1.8, (100, 170, 255, 35))
     draw_beam(beam_surface, camera, magnetic_axis.mult(-1), beam_length, beam_width * 1.3, (120, 185, 255, 70))
     draw_beam(beam_surface, camera, magnetic_axis.mult(-1), beam_length, beam_width, (170, 220, 255, 130))
-    screen.blit(beam_surface,(0,0))
     config.magnetic_axis = magnetic_axis
+    
+    star_radius = config.stellar_radius
+    field_line_width = 1 
+
     # TODO:: Improve field line depth and visualization
     field_surface = pygame.Surface(
         screen.get_size(),
         pygame.SRCALPHA
     )
-
-    star_radius = config.stellar_radius
-    field_line_width = 1 
-
+    
     for field_line in field_lines:
 
         for i in range(len(field_line) - 1):
@@ -299,6 +343,12 @@ while running:
             )
             
                 
+            segment_depth = (depth1 + depth2) / 2
+            mid_px = (px1 + px2) / 2
+            mid_py = (py1 + py2) / 2
+            projected_distance_squared = (mid_px * mid_px + mid_py * mid_py)
+            star_radius_squared = star_radius * star_radius
+            depth_alpha = int(max(80, min(220,160 + segment_depth * 25)))
 
             screen_x1 = round(
                 px1 * camera.zoom + camera.offset_x
@@ -315,11 +365,6 @@ while running:
                 py2 * camera.zoom + camera.offset_y
             )
 
-            segment_depth = (depth1 + depth2) / 2
-            mid_px = (px1 + px2) / 2
-            mid_py = (py1 + py2) / 2
-            projected_distance_squared = (mid_px * mid_px + mid_py * mid_py)
-            star_radius_squared = star_radius * star_radius
 
             hidden_by_star = False
 
@@ -336,44 +381,176 @@ while running:
                 continue
             pygame.draw.line(
                 field_surface,
-                (180, 210, 255, 210),
+                (180, 210, 255, depth_alpha),
                 (screen_x1, screen_y1),
                 (screen_x2, screen_y2),
                 field_line_width
             )
 
+    screen.blit(beam_surface, (0, 0))
+    screen.blit(field_surface, (0, 0))
+    
+    if star_screen_pos is not None:
+        draw_star(
+            screen,
+            pulsar_glow,
+            star_screen_pos,
+            core_color=(80,140,255),
+            zoom= camera.zoom,
+            base_radius= config.stellar_radius, 
+            core_radius= config.stellar_radius 
+        )
+    
+
     screen.set_clip(None)
-# =============================================================================
+# -------------------------------------------
     # CONTROL PANEL 
     
+    # =============================================================================
+# CONTROL PANEL
+
     panel_x = visualization_width + 28
     panel_y = 32
-    row_gap = 34
-
 
     screen.blit(title_surface, (panel_x, panel_y))
 
-    labels = [
-        f"Omega:   {config.omega}",
-        f"Tilt:    {math.degrees(alpha):.0f}°",
-        f"Field:   {config.polar_field_strength}",
-        f"Paused:  {'Yes' if paused else 'No'}"
+    y = panel_y + 55
+
+    period = 2 * math.pi / config.omega
+    light_cylinder = config.speed_of_light / config.omega
+
+    section_surface = section_font.render(
+        "SIMULATION",
+        True,
+        muted_color
+    )
+
+    screen.blit(section_surface, (panel_x, y))
+    y += 30
+
+    rows = [
+        ("Omega", f"{config.omega:.2f}"),
+        ("Tilt", f"{math.degrees(alpha):.0f}°"),
+        ("Field", f"{config.polar_field_strength:.2f}"),
+        ("Period", f"{period:.2f}"),
+        ("Light Cylinder", f"{light_cylinder:.2f}")
     ]
 
-    for i, text in enumerate(labels):
-        label_surface = label_font.render(text, True, (200, 210, 225))
-        screen.blit(
-            label_surface,
-            (panel_x, panel_y + 48 + i * row_gap)
+    for label, value in rows:
+        label_surface = label_font.render(
+            label,
+            True,
+            label_color
         )
 
-    screen.set_clip(visualization_area)
+        value_surface = label_font.render(
+            value,
+            True,
+            value_color
+        )
 
-    screen.blit(field_surface, (0, 0))
-    
-    screen.set_clip(None)
+        screen.blit(
+            label_surface,
+            (panel_x, y)
+        )
+
+        screen.blit(
+            value_surface,
+            (
+                visualization_width
+                + panel_width
+                - 28
+                - value_surface.get_width(),
+                y
+            )
+        )
+
+        y += 32
 
 
+    y += 20
+
+    section_surface = section_font.render(
+        "STATUS",
+        True,
+        muted_color
+    )
+
+    screen.blit(section_surface, (panel_x, y))
+    y += 30
+
+    paused_surface = label_font.render(
+        "Paused",
+        True,
+        label_color
+    )
+
+    paused_value = label_font.render(
+        "Yes" if paused else "No",
+        True,
+        value_color
+    )
+
+    screen.blit(
+        paused_surface,
+        (panel_x, y)
+    )
+
+    screen.blit(
+        paused_value,
+        (
+            visualization_width
+            + panel_width
+            - 28
+            - paused_value.get_width(),
+            y
+        )
+    )
+
+
+    y += 55
+
+    section_surface = section_font.render(
+        "CONTROLS",
+        True,
+        muted_color
+    )
+
+    screen.blit(section_surface, (panel_x, y))
+    y += 30
+
+    controls = [
+    ("A / D", "Rotation speed"),
+    ("W / S", "Magnetic tilt"),
+    ("Arrows", "Camera"),
+    ("Wheel", "Zoom"),
+    ("Space", "Pause")
+    ]
+
+    for key, action in controls:
+        key_surface = section_font.render(
+            key,
+            True,
+            value_color
+        )
+
+        action_surface = section_font.render(
+            action,
+            True,
+            label_color
+        )
+
+        screen.blit(
+            key_surface,
+            (panel_x, y)
+        )
+
+        screen.blit(
+            action_surface,
+            (panel_x + 70, y)
+        )
+
+        y += 36
     dt = clock.tick(60) / 1000.0
     if not paused:
         simulation_time += dt
