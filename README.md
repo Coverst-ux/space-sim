@@ -1,11 +1,74 @@
 # Space Simulation
 
-An interactive 3D simulator exploring space phenomena such as planetary orbits, galaxies, stellar collisions, pulsars, and many more to come through visual simulations. 
+An interactive 3D simulator for exploring space phenomena including planetary orbits, galaxies, stellar collisions, binary mergers, and pulsars.
+
+The project combines a **C++ physics backend** with **Python/Pygame rendering** through pybind11.
 
 ## Stardance 2026
-**New pulsar and neutron-star extension written in C++. View the extension repository here: [Space_Sim_C++](https://github.com/Coverst-ux/Space-sim-Cpp-Port)**
+
+The Stardance extension adds a new **pulsar / neutron-star simulation**, including magnetic field visualization, rotating emission beams, and interactive controls.
+
+**C++ physics repository:**  
+[Space-Sim C++ Core](https://github.com/Coverst-ux/Space-sim-Cpp-Port)
 
 I used AI for reviewing, planning, debugging advice, and research while making sure I understood everything that was said before applying it.
+
+---
+
+# Pulsar Simulation
+
+The latest simulation visualizes the geometry of a rotating pulsar.
+
+### Features
+
+- 3D magnetic dipole field lines
+- Tilted magnetic axis
+- Rotating polar emission beams
+- Adjustable rotation speed
+- Adjustable magnetic tilt
+- Pause / resume
+- 3D camera rotation
+- Zoom controls
+- Background starfield
+- Field-line depth fading
+- Pulsar occlusion
+- Live rotation period
+- Live light-cylinder radius
+
+The current model is intentionally simplified and focuses on showing the main geometry of a pulsar rather than simulating a complete plasma magnetosphere.
+
+## Controls
+
+| Control | Action |
+| --- | --- |
+| Arrow Keys | Rotate camera |
+| Mouse Wheel | Zoom |
+| A / D | Decrease / increase rotation speed |
+| W / S | Increase / decrease magnetic tilt |
+| Space | Pause / resume |
+
+## Download
+
+A standalone Windows build is available through the latest GitHub Release.
+
+Download the `.exe` and run it directly. Python is not required.
+
+---
+
+# How the Pulsar Simulation Works
+
+A pulsar is a rapidly rotating neutron star whose magnetic axis does not necessarily align with its rotation axis.
+
+The simulation defines a magnetic tilt angle and rotates the magnetic axis around the star:
+
+
+        rotation axis
+             │
+             │
+             ●
+              \
+               \
+                magnetic axis
 
 ## Galaxy/N-body Simulation
 ![Galaxy Simulation](output.gif)
@@ -17,10 +80,12 @@ I used AI for reviewing, planning, debugging advice, and research while making s
 ## Binary-Merger Simulation
 ![Binary-Merger](Binary_Merger.gif)
 
+
 A 3D gravitational N-body simulation engine implementing Leapfrog (Störmer-Verlet) integration and the Barnes-Hut spatial partitioning algorithm ($O(N \log N)$). The C++ physics backend achieves up to a **6.1× speedup over the NumPy implementation at N=1,300**, building on an earlier **39.6× improvement achieved by NumPy over the pure-Python brute-force implementation at N=500**. Orbital accuracy validated against NASA Planetary Fact Sheet data across all 8 planets, with a maximum period error of 1.1% on Neptune's 60,182-day orbit.
 
 ## Performance
-
+> **Historical benchmark:** The following results are kept to document the project's earlier performance experiments and the reasoning that led to the C++ port. They do not represent the current backend.
+> 
 > **Note:** (OUTDATED) Barnes-Hut underperforms at N=500 due to pure Python tree construction and recursive traversal overhead, this is expected behavior at low N. See [Design Decisions](#design-decisions) for full analysis.
 
 | Method | Time (N=500, 50 steps) | Relative Speed |
@@ -203,7 +268,7 @@ space-sim/
 │   ├── io/         # JSON config loading
 │   ├── rendering/  # Pygame coordinate conversion and drawing helpers
 │   └── utils/      # Vector math and physical constants
-├── Simulations/    # Entry points: main.py (galaxy), solar_system.py (solar system), collisions.py (binary merger)
+├── Simulations/    # Entry points: main.py (galaxy), solar_system.py (solar system), collisions.py (binary merger), pulsar_simulation.py (pulsar)
 ├── tests/          # Physics, regression, and momentum conservation tests
 ├── benchmarks/     # Orbital period measurement, integrator comparison, C++ vs NumPy speed benchmark
 ├── configs/        # Simulation initial conditions (JSON)
