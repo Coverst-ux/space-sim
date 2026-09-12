@@ -1,25 +1,59 @@
 # Space Simulation
 
-An interactive 3D simulator for exploring space phenomena including planetary orbits, galaxies, stellar collisions, binary mergers, and pulsars.
+This is a 3D physics simulation that simulates space phenomena with a focus on scientific accuracy, such as:
 
-The project combines a **C++ physics backend** with **Python/Pygame rendering** through pybind11.
+- Solar System, 
+- Galaxies, 
+- Mergers, 
+- and Pulsars 
+
+
+The project combines a **C++ physics backend** with **Python/Pygame rendering** through pybind11
 
 ## Stardance 2026
 
-The Stardance extension adds a new **pulsar / neutron-star simulation**, including magnetic field visualization, rotating emission beams, and interactive controls.
+I added a new **pulsar / neutron star simulation** for the Stardance extension, including magnetic field visualization, rotating beams, and interactive controls
+
+Researching this new topic was EXHAUSTING, by far the most time consuming research I've done. At the start of this extension, I was dreading how difficult implementing the physics would be. Apparently, the REAL pain was getting the rendering to look how I wanted without having external assets
 
 **C++ physics repository:**  
 [Space-Sim C++ Core](https://github.com/Coverst-ux/Space-sim-Cpp-Port)
 
-I used AI for reviewing, planning, debugging advice, and research while making sure I understood everything that was said before applying it.
+I used AI for reviewing, planning, debugging advice, and research while making sure I understood everything that was said before applying it
 
 ---
+# Demos
 
-# Pulsar Simulation
+### Galaxy/N-body Simulation
+![Galaxy Simulation](output.gif)
 
-The latest simulation visualizes the geometry of a rotating pulsar.
+### Solar System Simulation
 
-### Features
+![Solar System Simulation](solar_system.gif)
+
+### Binary-Merger Simulation
+![Binary-Merger](Binary_Merger.gif)
+
+### Pulsar Simulation
+![Pulsar](Pulsar.gif)
+
+## Controls
+
+| Control | Action |
+| --- | --- |
+| Arrow Keys | Rotate camera |
+| Mouse Wheel | Zoom |
+| A / D | Decrease / increase rotation speed |
+| W / S | Increase / decrease magnetic tilt |
+| Space | Pause / resume |
+
+## Download
+
+A standalone Windows build is available through the latest GitHub Release.
+
+Download the `.exe` and run it directly. Python is not required.
+
+## Features
 
 - 3D magnetic dipole field lines
 - Tilted magnetic axis
@@ -37,21 +71,6 @@ The latest simulation visualizes the geometry of a rotating pulsar.
 
 The current model is intentionally simplified and focuses on showing the main geometry of a pulsar rather than simulating a complete plasma magnetosphere.
 
-## Controls
-
-| Control | Action |
-| --- | --- |
-| Arrow Keys | Rotate camera |
-| Mouse Wheel | Zoom |
-| A / D | Decrease / increase rotation speed |
-| W / S | Increase / decrease magnetic tilt |
-| Space | Pause / resume |
-
-## Download
-
-A standalone Windows build is available through the latest GitHub Release.
-
-Download the `.exe` and run it directly. Python is not required.
 
 ---
 
@@ -70,20 +89,6 @@ The simulation defines a magnetic tilt angle and rotates the magnetic axis aroun
                \
                 magnetic axis
 
-## Galaxy/N-body Simulation
-![Galaxy Simulation](output.gif)
-
-## Solar System Simulation
-
-![Solar System Simulation](solar_system.gif)
-
-## Binary-Merger Simulation
-![Binary-Merger](Binary_Merger.gif)
-
-## Pulsar Simulation
-![Pulsar](Pulsar.gif)
-
-A 3D gravitational N-body simulation engine implementing Leapfrog (Störmer-Verlet) integration and the Barnes-Hut spatial partitioning algorithm ($O(N \log N)$). The C++ physics backend achieves up to a **6.1× speedup over the NumPy implementation at N=1,300**, building on an earlier **39.6× improvement achieved by NumPy over the pure-Python brute-force implementation at N=500**. Orbital accuracy validated against NASA Planetary Fact Sheet data across all 8 planets, with a maximum period error of 1.1% on Neptune's 60,182-day orbit.
 
 ## Performance
 > **Historical benchmark:** The following results are kept to document the project's earlier performance experiments and the reasoning that led to the C++ port. They do not represent the current backend.
@@ -99,11 +104,10 @@ A 3D gravitational N-body simulation engine implementing Leapfrog (Störmer-Verl
 ## Performance History
 
 ### Phase 1: Pure Python → NumPy (N=750)
-(OUTDATED) At N=750, NumPy vectorization dominates by replacing Python-level loop dispatch and per-pair object allocation with contiguous memory operations executed by compiled C routines. Although Barnes-Hut reduces force evaluation complexity from $O(N^2)$ to $O(N \log N)$, its advantage is outweighed at this scale by octree construction and recursive traversal costs in pure Python. The implementation demonstrates the algorithmic architecture and expected scaling behavior, but interpreter overhead prevents reaching the particle counts where asymptotic gains dominate. This motivates the planned NumPy + Barnes-Hut hybrid implementation described in the Design Decisions section.
+(OUTDATED) At N=750, NumPy vectorization was much faster than both my pure Python and Barnes-Hut implementations. Although Barnes-Hut reduces theoretical complexity from $O(N^2)$ to $O(N \log N)$, my Python version spent too much time building and traversing the octree for it to help at this size. This was one of the reasons I eventually started looking at moving the physics core to C++
 
 ### Phase 2: NumPy → C++ (N=750+)
-NumPy's 39.6x speedup was great at N=750 recording a stable 30 fps, but it hit a hard performance ceiling as N grew. Python overhead that vectorization couldn't fully escape at higher N was stagnating any improvements to the stability and performance of the simulation. After a few brainstorming sessions, porting the main physics core into C++ was chosen as the next concrete step. Various things such as the Leapfrog integrator, gravitational physics, and the Barnes-Hut spatial partitioning algorithm were all fully rewritten in C++. Instead of programming the whole simulation project from scratch, pybind11 was used as a bridge to Python so the existing Pygame rendering pipeline didn't need to be rewritten.
-
+NumPy's 39.6x speedup was great at N=750 recording a stable 30 fps, but it hit a hard performance ceiling as N grew. Python overhead that vectorization couldn't fully escape at higher N was stopping any improvements to the stability and performance of the simulation. After a few brainstorming sessions, porting the main physics core into C++ was chosen as the next concrete step. Various things such as the Leapfrog integrator, gravitational physics, and the Barnes-Hut spatial partitioning algorithm were all fully rewritten in C++. Instead of programming the whole simulation project from scratch, pybind11 was used as a bridge to Python so the existing Pygame rendering pipeline didn't need to be rewritten.
 
 Repo -> 
 [![C++ Core](https://img.shields.io/badge/C++-Physics_Core-blue)](https://github.com/Coverst-ux/Space-sim-Cpp-Port) 
@@ -115,11 +119,11 @@ The C++ physics backend was benchmarked against the previous NumPy implementatio
 | 750 | 1.720 s | 0.404 s | 34.4 ms | 8.1 ms | **4.3×** |
 | 1,300 | 4.913 s | 0.809 s | 98.3 ms | 16.2 ms | **6.1×** |
 
-At 750 bodies, the C++ implementation calculated 50 physics steps in 0.404 s, compared with 1.720 s for the NumPy implementation.
+At 750 bodies, the C++ implementation calculated 50 physics steps in 0.404 s, compared with 1.720 s for the NumPy implementation
 
-At 1,300 bodies, C++ completed the same workload in 0.809 s, compared with 4.913 s for NumPy.
+At 1,300 bodies, C++ completed the same workload in 0.809 s, compared with 4.913 s for NumPy
 
-This corresponds to a 4.3× speedup at N=750 and a 6.1× speedup at N=1,300. The increasing speedup at higher body counts indicates that the C++ implementation scales more favorably for this workload.      
+This corresponds to a 4.3× speedup at N=750 and a 6.1× speedup at N=1,300. The gap got bigger as I increased the body count, which showed me that moving the physics core to C++ was actually helping me more at larger simulations      
 
 
 The benchmark excludes rendering costs and purely records the computational cost of the physics loop.
@@ -247,7 +251,7 @@ JSON Config / generate_spiral()
 │  └─ Kick 2:  v_{t+1} = v_{t+½} + a_{t+1}·Δt/2
 │                                         │
 │   a_{t+1} cached → reused as aₜ          │
-│   next step (no redundant tree build)   │
+│   next step (no extra tree build)   │
 └──────────────────┬──────────────────────┘
                    │ threading.Lock
 ┌──────────────────▼──────────────────────┐
@@ -259,7 +263,7 @@ JSON Config / generate_spiral()
 └─────────────────────────────────────────┘
 ```
 
-The `is_first_step` flag is an architectural optimization that eliminates a redundant $O(N \log N)$ tree traversal on frame zero. Because the final acceleration $\vec{a}_{t+1}$ computed at the end of step $i$ is mathematically identical to the initial acceleration $\vec{a}_t$ required at the start of step $i+1$, it is cached and reused, the tree is built exactly once per step, never twice.
+The `is_first_step` flag handles the initial case where no previous acceleration exists yet. This avoids rebuilding and traversing the Barnes-Hut tree twice per step
 
 ### Repository Structure
 
@@ -340,17 +344,15 @@ python benchmarks/measure_period.py
 
 ## What I Learned
 
-- **Symplectic integration matters in practice, not just theory.** Euler's energy drift isn't a textbook footnote, over a 20-year simulated horizon it accumulates over 60% energy error, making long-term orbital simulation physically meaningless. Leapfrog's bounded oscillation is the difference between a valid simulation and an invalid one.
+- **Symplectic integration matters in practice** Euler's energy drift isn't something you can ignore, over a 20 year simulated horizon, it accumulates over 60% energy error, making long-term orbital simulation physically meaningless. Leapfrog kept the energy error bounded enough for long term orbital stability, while Euler didn't.
 
-- **Python overhead dominates over algorithmic complexity at low N.** The profiler revealed that `gravitational_force` wasn't slow because of the math, it was slow because of per-pair Python object creation and interpreter dispatch. NumPy's 39× speedup comes almost entirely from eliminating that overhead, not from a better algorithm.
+- **Python overhead matters more than algorithmic complexity at low N ** The profiler revealed that `gravitational_force` wasn't slow because of the math, it was slow because of per-pair Python object creation and interpreter dispatch. NumPy's 39× speedup comes almost entirely from eliminating that overhead, not from a better algorithm.
 
-- **Big-O complexity is not the same as real-world performance.** Barnes-Hut is theoretically $O(N \log N)$ vs $O(N^2)$ brute force, yet it ran 3× *slower* at N=500. The tree construction, recursive traversal, and Python object overhead cost more than the algorithmic saving at this scale. Complexity class only tells you how something scales, not how it performs right now.
-
-- **Caching intermediate computation state is an architectural decision, not a micro-optimization.** The `is_first_step` flag exists because recomputing $\vec{a}_t$ at the start of every frame would waste an entire $O(N \log N)$ tree traversal that was already computed at the end of the previous frame. Recognizing that consecutive Leapfrog steps share an acceleration value turned a redundant calculation into a free cache hit.
+- **Big O complexity is not the same as real world performance** Barnes-Hut is theoretically $O(N \log N)$ vs $O(N^2)$ brute force, yet it ran 3× *slower* at N=500. The tree construction, recursive traversal, and Python object overhead cost more than the algorithmic saving at this scale. Big O only tells you how something scales, not how it performs right now.
 
 <details>
-<summary><strong>What I Learned — C++ Port (Phase 2)</strong></summary>
+<summary><strong>What I Learned, C++ Port (Phase 2)</strong></summary>
 
-- **Precision matters at astronomical scale.** `cx/cy/cz` stored as `float` caused silent infinite subdivision in the octree, invisible in small-scale tests, but broke down at real orbital distances. Switching to `double` fixed it. A reminder that "it works in tests" isn't the same as "it works at the actual scale you're targeting."
+- **Precision matters at astronomical scale.** `cx/cy/cz` stored as `float` caused silent infinite subdivision in the octree, invisible in small scale tests, but broke down at real orbital distances. Switching to `double` fixed it. A reminder that "it works in tests" isn't the same as "it works at the actual scale you're targeting."
 
 </details>
