@@ -19,15 +19,19 @@ pulsar_glow = create_glow_texture(
     radius = 40,
     color = (70, 120, 255)
 )
-config = sim.PulsarConfig(
-    1.0, # stellar radius
-    1.0, # speed of light 
-    1.0, # polar field strength
-    1.0, # omega
-    sim.Vector3D(0.0,0.0,1.0)
-)
 
 alpha = math.radians(30)
+config = sim.PulsarConfig(
+    1.0,                         # stellar radius
+    1.0,                         # speed of light
+    1.0,                         # polar field strength
+    1.0,                         # omega
+    alpha,                       # magnetic tilt
+    sim.Vector3D(0.0, 0.0, 1.0),
+    1.4 * 1.9885e30,             # mass
+    0.0                          # phase
+)
+
 simulation_time = 0.0
 step_length = 0.02 * config.stellar_radius  
 maximum_steps = 2000
@@ -233,7 +237,9 @@ while running:
     alpha = max(
         0.0,
         min(alpha, math.radians(90))
-    )    
+    )
+    
+    config.alpha = alpha
         
     window_width, window_height = screen.get_size()
     visualization_width = int(window_width * 0.75)
@@ -295,12 +301,15 @@ while running:
             )
         
     # rendering
-    phase = config.omega * simulation_time
+    phase = config.phase
+    
+    
     magnetic_axis = sim.Vector3D(
     math.sin(alpha) * math.cos(phase),
     math.sin(alpha) * math.sin(phase),
     math.cos(alpha)
     )
+    
     
     beam_surface = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
     beam_width = 40
@@ -553,5 +562,5 @@ while running:
         y += 36
     dt = clock.tick(60) / 1000.0
     if not paused:
-        simulation_time += dt
+        sim.update_pulsar(config, dt)
     pygame.display.update()
