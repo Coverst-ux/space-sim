@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Space-Sim</title>
+    <meta
+      name="description"
+      content="A gravitational N-body simulation engine built from scratch in Python."
+    />
+
+    <link rel="stylesheet" href="style.css" />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Cloudflare Web Analytics -->
+    <script
+      type="module"
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "29e87a11936a4b718e231e69e004757c"}'
+    ></script>
+  </head>
+  <body>
+    <canvas id="starfield"></canvas>
+    <nav class="navbar">
+      <ul>
+        <li class="nav-item"><a href="#demo">Simulations</a></li>
+        <li class="nav-item"><a href="#features">Features</a></li>
+        <li class="nav-item"><a href="#architecture">Architecture</a></li>
+        <li class="nav-item"><a href="#integration">Integration</a></li>
+        <li class="nav-item"><a href="#accuracy">Accuracy</a></li>
+        <li class="nav-item"><a href="#benchmarks">Performance</a></li>
+      </ul>
+    </nav>
+    <section class="hero">
+      <div class="hero-glow"></div>
+      <div class="hero-text-shade"></div>
+      <h1>Space-Sim</h1>
+      <p>
+        A system of bodies, simulated under the influence of physical forces.
+      </p>
+    </section>
+
+    <section class="demo" id="demo">
+      <h2>Simulation</h2>
+      <div class="demo-videos">
+        <figure>
+          <figcaption>[ galaxy ]</figcaption>
+          <video src="Galaxy.mp4" autoplay loop muted playsinline></video>
+        </figure>
+        <figure>
+          <figcaption>[ solar system ]</figcaption>
+          <video src="solar_system.mp4" autoplay loop muted playsinline></video>
+        </figure>
+      </div>
+    </section>
+
+    <section class="features" id="features">
+      <h2>Features</h2>
+      <ul class="feature-list">
+        <li>Newtonian gravitational force calculation between bodies</li>
+        <li>
+          <span
+            class="term"
+            data-definition="A mathematical method that determines the next move in the next moment by using the current velocity and position."
+            >Euler</span
+          >
+          and
+          <span
+            class="term"
+            data-definition="A mathematical method that determines the next move by first updating velocity, then using the already updated velocity to update the position, which results in keeping orbits stable long-term"
+            >Leapfrog (Störmer-Verlet)</span
+          >
+          integration implementations
+        </li>
+        <li>Config-driven body loading from JSON</li>
+        <li>Pygame rendering with motion-blur orbit trails</li>
+        <li>
+          Decoupled physics and rendering threads via
+          <code>threading.Lock</code> to isolate the Pygame render-viewport
+          frame-rate from the physics integration pass
+        </li>
+        <li>
+          <span
+            class="term"
+            data-definition="Gravitational softening is a technique that prevents bodies from getting unrealistically close to each other."
+            >Gravitational softening (ϵ)</span
+          >
+          to prevent force
+          <span
+            class="term"
+            data-definition="A point where two bodies get so close that the gravitational force between them approaches infinity."
+            >singularities</span
+          >
+          during close encounters
+        </li>
+        <li>Body collision detection with momentum-conserving merges</li>
+        <li>
+          Random N-body generation with
+          <span
+            class="term"
+            data-definition="All bodies orbit in the same direction while being organized so the whole system rotates together as one unit."
+            >coherent prograde velocity distribution (v = √(GM/r))</span
+          >
+        </li>
+        <li>Camera and zoom system for navigating large simulations</li>
+        <li>
+          Barnes-Hut O(N log N) spatial partitioning for gravitational force
+          approximation
+        </li>
+        <li>
+          NumPy vectorized force calculations eliminating per-pair Python object
+          overhead
+        </li>
+        <li>
+          Pytest coverage for gravitational force, orbital regression, and
+          momentum conservation
+        </li>
+        <li>
+          Benchmark scripts for orbital period measurement and integrator
+          comparison
+        </li>
+      </ul>
+    </section>
+
+    <section class="architecture" id="architecture">
+      <h2>How it works</h2>
+      <div class="pipeline">
+        <div class="stage">
+          <span class="stage-number">[ 01 ]</span>
+          <h3>Vector3D</h3>
+          <p>
+            Position, velocity, and force represented as 3D vectors for every
+            body.
+          </p>
+        </div>
+        <div class="stage">
+          <span class="stage-number">[ 02 ]</span>
+          <h3>Barnes-Hut Octree</h3>
+          <p>
+            Distant clusters of mass are approximated instead of compared
+            body-by-body, cutting complexity to O(N log N).
+          </p>
+        </div>
+        <div class="stage">
+          <span class="stage-number">[ 03 ]</span>
+          <h3>NumPy Vectorization</h3>
+          <p>
+            Gravity calculations run as batched array operations instead of
+            Python loops.
+          </p>
+        </div>
+        <div class="stage">
+          <span class="stage-number">[ 04 ]</span>
+          <h3>Threading</h3>
+          <p>
+            Physics and rendering run on separate threads, keeping the
+            simulation smooth as N grows.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="integration" id="integration">
+      <h2>Numerical Integration</h2>
+      <p>
+        <span
+          class="term"
+          data-definition="A mathematical method that determines the next move by first updating velocity, then using the already updated velocity to update the position, which results in keeping orbits stable long-term"
+          >Leapfrog (Störmer-Verlet) integration</span
+        >
+        was chosen over
+        <span
+          class="term"
+          data-definition="A mathematical method that determines the next move in the next moment by using the current velocity and position."
+          >Euler</span
+        >
+        because it is
+        <span
+          class="term"
+          data-definition="A mathematical property that is used to describe a method that keeps the simulation's total energy stable over long periods of time. (Extremely Simplified)"
+          >symplectic</span
+        >, it preserves the
+        <span
+          class="term"
+          data-definition="Non-symplectic integrators cause the bodies to lose extreme amounts of energy and head off course in a spiral orbit. Symplectic integrators on the other hand, are built specifically to preserve the system's overall energy behavior by fluctuating between a small error percentage rather than rapidly rising."
+          >geometric structure of Hamiltonian systems</span
+        >, keeping orbital energy bounded rather than drifting over time.
+      </p>
+      <div class="integration-stat">
+        <div class="stat-block">
+          <span class="stat-number">60%</span>
+          <span class="stat-label"
+            ><span
+              class="term"
+              data-definition="A mathematical method that determines the next move in the next moment by using the current velocity and position."
+              >Euler</span
+            >
+            energy error<br />(20-year horizon)</span
+          >
+        </div>
+        <div class="stat-block">
+          <span class="stat-number">0.03%</span>
+          <span class="stat-label"
+            ><span
+              class="term"
+              data-definition="A mathematical method that determines the next move by first updating velocity, then using the already updated velocity to update the position, which results in keeping orbits stable long-term"
+              >Leapfrog</span
+            >
+            energy error<br />(20-year horizon)</span
+          >
+        </div>
+      </div>
+      <p class="integration-note">
+        Gravitational force is
+        <span
+          class="term"
+          data-definition="Gravitational softening is a technique that prevents bodies from getting unrealistically close to each other."
+          >softened</span
+        >
+        near close encounters (F = Gm₁m₂ / (r² + ε²)^1.5) to prevent
+        <span
+          class="term"
+          data-definition="A point where two bodies get so close that the gravitational force between them approaches infinity."
+          >singularities</span
+        >
+        as r → 0, bounding the maximum force at small separations while
+        preserving accuracy at larger distances.
+      </p>
+      <img
+        class="energy-chart"
+        src="euler_vs_leapfrog_energy.png"
+        alt="Relative energy error chart between Euler's and Leapfrog's integration"
+      />
+    </section>
+
+    <section class="accuracy" id="accuracy">
+      <h2>Orbital Accuracy</h2>
+      <p class="accuracy-note">
+        Orbital periods were validated against the NASA Planetary Fact Sheet by
+        tracking cumulative angular displacement (2π radians) relative to the
+        Sun using the
+        <span
+          class="term"
+          data-definition="A mathematical method that determines the next move by first updating velocity, then using the already updated velocity to update the position, which results in keeping orbits stable long-term"
+          >Leapfrog</span
+        >
+        integrator.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Body</th>
+              <th>Target Period (days)</th>
+              <th>Simulated Period (days)</th>
+              <th>Error (days)</th>
+              <th>Accuracy</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Mercury</td>
+              <td>87.97</td>
+              <td>87.96</td>
+              <td>0.01</td>
+              <td>99.99%</td>
+            </tr>
+            <tr>
+              <td>Venus</td>
+              <td>224.70</td>
+              <td>224.12</td>
+              <td>0.58</td>
+              <td>99.74%</td>
+            </tr>
+            <tr>
+              <td>Earth</td>
+              <td>365.26</td>
+              <td>364.92</td>
+              <td>0.34</td>
+              <td>99.91%</td>
+            </tr>
+            <tr>
+              <td>Mars</td>
+              <td>686.98</td>
+              <td>686.12</td>
+              <td>0.86</td>
+              <td>99.87%</td>
+            </tr>
+            <tr>
+              <td>Jupiter</td>
+              <td>4,332.59</td>
+              <td>4,332.12</td>
+              <td>0.47</td>
+              <td>99.99%</td>
+            </tr>
+            <tr>
+              <td>Saturn</td>
+              <td>10,759.22</td>
+              <td>10,720.96</td>
+              <td>38.26</td>
+              <td>99.64%</td>
+            </tr>
+            <tr>
+              <td>Uranus</td>
+              <td>30,688.50</td>
+              <td>30,277.46</td>
+              <td>411.04</td>
+              <td>98.66%</td>
+            </tr>
+            <tr>
+              <td>Neptune</td>
+              <td>60,182.00</td>
+              <td>59,518.08</td>
+              <td>663.92</td>
+              <td>98.90%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="accuracy-source">Reference: NASA Planetary Fact Sheet</p>
+    </section>
+
+    <section class="benchmarks" id="benchmarks">
+      <h2>Performance</h2>
+      <canvas id="interactiveTable"></canvas>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Time (N=500, 50 steps)</th>
+              <th>Relative Speed</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Barnes-Hut pure Python</td>
+              <td>100.1s</td>
+              <td>3x slower</td>
+            </tr>
+            <tr>
+              <td>O(N²) pure Python</td>
+              <td>33.07s</td>
+              <td>baseline</td>
+            </tr>
+            <tr>
+              <td>NumPy vectorized</td>
+              <td>0.835s</td>
+              <td>39.6x faster</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="benchmark-note">
+        Barnes-Hut underperforms at N=500 due to pure Python tree construction
+        and recursive traversal overhead, expected at low N. NumPy vectorization
+        wins at this scale by replacing per-pair Python object allocation with
+        vectorized operations in compiled C. A NumPy + Barnes-Hut hybrid is the
+        planned next step to reach the particle counts where Barnes-Hut's O(N
+        log N) advantage dominates.
+      </p>
+      <p class="benchmark-env">
+        Benchmarked on Python 3.14 · Intel i5-14400F · Windows 11 Pro
+      </p>
+    </section>
+    <section class="stack">
+      <h2>Built with</h2>
+      <ul class="tech-list">
+        <li>Python</li>
+        <li>NumPy</li>
+        <li>pygame-ce</li>
+        <li>matplotlib</li>
+        <li>pytest</li>
+      </ul>
+    </section>
+
+    <footer>
+      <a
+        href="https://github.com/Coverst-ux/space-sim-site"
+        class="github-icon"
+        aria-label="GitHub Profile"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <i class="fa-brands fa-github"></i>
+      </a>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="main.js"></script>
+  </body>
+</html>
