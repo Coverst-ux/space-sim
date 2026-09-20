@@ -10,6 +10,12 @@ This is a 3D physics simulation that simulates space phenomena with a focus on s
 
 The project combines a **C++ physics backend** with **Python/Pygame rendering** through pybind11
 
+## Demo Website
+
+**Live demo:** [Try Space Sim](https://coverst-ux.github.io/space-sim-site/)
+
+**Demo website source code:** [View the website source](https://github.com/Coverst-ux/space-sim-site)
+
 ## Stardance 2026
 
 I added a new **pulsar / neutron star simulation** for the Stardance extension, including magnetic field visualization, rotating beams, and interactive controls
